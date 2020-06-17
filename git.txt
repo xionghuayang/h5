@@ -2,4 +2,14 @@ git remote add h5web https://github.com/xionghuayang/h5.git
 
 git push -u h5web master
 
-wobianji
+
+呵呵呵呵呵
+git pull报错
+error: Your local changes to the following files would be overwritten by merge:
+        src/pages/index/index.vue
+Please, commit your changes or stash them before you can merge.
+
+解决方案（https://blog.csdn.net/weixin_43820866/java/article/details/105636435）
+git stash // 将所有本地修改隐藏起来
+git pull  // 拉取远端仓库代码
+git stash pop // 将隐藏的修改放出来
