@@ -7,8 +7,8 @@
       <div class="course_title">
         <p>白泽在线测试直播专题课程（三）</p>
         <p>
-          <span class="price_new">￥100</span>
-          <s class="price_old">￥200.00</s>
+          <span class="publicCourse">公开课</span>
+          <!-- <s class="price_old">￥200.00</s> -->
         </p>
       </div>
       <div class="tab_box">
@@ -82,7 +82,7 @@
         </div>
       </div>
       <div class="foot_right">
-        <div class="buy" @click="goBuy">立即购买</div>
+        <div class="buy">加入直播课</div>
       </div>
     </div>
 
@@ -138,22 +138,13 @@ export default {
        */
       this.showPopup = !this.showPopup;
     },
-    // 前往订单支付
-    goBuy() {
-      this.$router.push({
-        path: "/courseorder",
-        query: {
-          id: this.$route.query.id
-        }
-      });
+    // 前往直播间
+    goLive() {
+      this.$router.push("/playing");
     },
     // 前往回放
     rePlay() {
       this.$router.push("/rePlay");
-    },
-    // 前往直播间
-    goLive() {
-      this.$router.push("/playing");
     }
   }
 };
@@ -161,6 +152,11 @@ export default {
 
 <style lang="scss">
 @import "@/assets/css/global.scss";
+.publicCourse {
+  font-size: 22px;
+  color: #05c600;
+}
+
 .cover_img {
   width: 100%;
   height: 372px;

@@ -20,7 +20,8 @@ npm run build
 ``` bash
 # install vue-native-websocket
 npm install vue-native-websocket --save
-
+# install weixin-js-sdk
+npm install weixin-js-sdk --save
 ```
 
 ### Customize configuration

@@ -5,6 +5,7 @@ import store from './store'
 import Vant from 'vant';
 import 'vant/lib/index.css';
 Vue.use(Vant);
+
 import $request from "@/config/request.js";// 导入我们的api接口
 import base from "@/config/base.js";// 导入我们的接口域名
 import $public from '@/config/public.js'//引入公共方法
@@ -13,6 +14,7 @@ Vue.prototype.$public = $public;
 import './config/rem.js';
 import '@/assets/css/base.css'
 
+import './utils/formatArea'
 // 路由守卫
 const defaultTitle = '直播课'
 router.beforeEach((to, from, next) => {
@@ -62,6 +64,6 @@ new Vue({
   store,
   render: h => h(App),
   created() {
-    this.$store.commit("loginSuccess",$public._getUserMsg());
+    this.$store.commit("loginSuccess", $public._getUserMsg());
   },
 }).$mount('#app')

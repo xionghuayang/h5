@@ -1,0 +1,21 @@
+$red:red;
+$green:green;
+$gray:#BBBBBB;
+$theme:#FED039;
+.red{
+    color: $red;
+}
+.green{
+    color: $green;
+}
+.gray{
+    color: $gray;
+}
+.theme{
+    color: $theme;
+}
+.flex_default{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
