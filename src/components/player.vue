@@ -5,13 +5,14 @@
       id="bz_video"
       preload="auto"
       playsinline
-      webkit-playsinline 
+      webkit-playsinline
       x5-playsinline
     ></video>
   </div>
 </template>
 <script>
 export default {
+  props: ["play"],
   // pagename:播放器
   data() {
     return {
@@ -23,17 +24,20 @@ export default {
       location.reload();
     }
   },
+
   deactivated() {
     console.log("销毁");
     // 销毁
     this.player.dispose();
   },
   mounted() {
+    console.log(this.play);
     // let Obj = this.$route.query;
-    let Obj = {
-        fileId:'5285890803523648557',
-        appID:'1257801634'
-    }
+    // let Obj = {
+    //   fileId: "5285890803487701514",
+    //   appID: "1257801634"
+    // };
+    let Obj = this.play;
     if (Obj.videoTit) document.title = Obj.videoTit;
     this.initVideo(Obj.fileId, Obj.appID);
   },
@@ -48,7 +52,6 @@ export default {
         posterImage: "" //封面
       });
       this.player.on("ready", res => {
-
         // 做一些处理
       });
     }
@@ -57,7 +60,7 @@ export default {
 </script>
 
 <style rel="stylesheet/scss" lang="scss" scoped>
-#bz_video{
-    height: 372px !important;
+#bz_video {
+  height: 372px !important;
 }
 </style>

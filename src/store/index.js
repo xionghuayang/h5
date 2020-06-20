@@ -3,16 +3,18 @@ import Vuex from 'vuex';
 import base from "@/config/base.js";// 导入我们的接口域名
 Vue.use(Vuex);
 const state = {
+  // 图片前缀
+  imagePrefix: 'https://baize-1257801634.cos.ap-chengdu.myqcloud.com/',
   $userInfo: '',
   // 用户头像
-  profilePicture:'',
-  stateTab:0,//状态切换返回
-  nickname:'',
-  reloadPage:false,//判定刷新页面
-    // bzWebSocket手动链接取地址上文 然后拼接下文
+  profilePicture: '',
+  stateTab: 0,//状态切换返回
+  nickname: '',
+  reloadPage: false,//判定刷新页面
+  // bzWebSocket手动链接取地址上文 然后拼接下文
   bzSocketURL: base.bzSocketURL,
   // 房间号
-  liveStreamName:'',
+  liveStreamName: '',
   socket: {
     // 连接状态
     isConnected: false,
@@ -27,8 +29,8 @@ const state = {
   }
 };
 const mutations = {
-  loginSuccess(state,data) {
-    localStorage.setItem("loginMsg",JSON.stringify(data));
+  loginSuccess(state, data) {
+    localStorage.setItem("loginMsg", JSON.stringify(data));
     state.$userInfo = data
   },
   getUserProfilePicture() {
@@ -36,7 +38,7 @@ const mutations = {
     state.profilePicture = data.imagePrefix + data.avatar;
     state.nickname = data.nickname;
   },
-  heartbeat(state,liveStreamName) {
+  heartbeat(state, liveStreamName) {
     state.liveStreamName = liveStreamName
   },
   // 连接打开
@@ -55,7 +57,7 @@ const mutations = {
       type: 99 //心跳消息
     };
     state.socket.heartBeatTimer = setInterval(() => {
-      state.socket.isConnected && Vue.prototype.$socket.sendObj({ "msg": heartbeatMsg,"code": 200});
+      state.socket.isConnected && Vue.prototype.$socket.sendObj({ "msg": heartbeatMsg, "code": 200 });
     }, state.socket.heartBeatInterval);
   },
   // 连接关闭

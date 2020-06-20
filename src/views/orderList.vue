@@ -85,13 +85,14 @@ export default {
       canclePayList: []
     };
   },
-  created() {
+  mounted() {
     this.isShowEmpty = this.allOrderList.length === 0 ? true : false;
   },
 
   methods: {
     handleTabClick(index, title) {
       // console.log(index, title);
+      this.isShowEmpty = false;
       if (this.allOrderList.length === 0) {
         this.isShowEmpty = true;
         return;

@@ -1,8 +1,9 @@
 <template>
   <div>
-    <player></player>
+    <player :play="player" v-if="isShowPlayer"></player>
+    <!-- <player :play="player"></player> -->
     <div class="player_navbar">
-        <player-navbar :status="2" :peopleNum="2"></player-navbar>
+      <player-navbar status="2" :peopleNum="2"></player-navbar>
     </div>
     <div class="tab_box">
       <van-tabs
@@ -18,36 +19,40 @@
         <van-tab title="课程目录" title-style="font-size:.906667rem;font-weight:bold;">
           <div class="re_play_directory">
             <div class="re_play_directory_title">
-              <p>白泽在线测试直播专题课程（三）</p>
+              <p>{{prePage.oneTitle}}</p>
               <p>
-                01 素描课
+                {{prePage.twoTitle}}
                 <span class="arrow_up">
                   <van-icon name="arrow-up" />
                 </span>
               </p>
             </div>
             <div class="re_play_directory_content">
-              <p class="re_lesson_title">《素描作画思维拓展》--第一节</p>
-              <p class="re_lesson_time">主讲老师：王小花│2020年8月3日│09：22</p>
-              <van-steps
-                direction="vertical"
-                :active="0"
-                active-color="#fed039"
-                @click-step="changeLesson"
-              >
-                <van-step>
-                  <h3>《素描作画思维拓展》--第一节（1）</h3>
-                </van-step>
-                <van-step>
-                  <h3>《素描作画思维拓展》--第一节（2）</h3>
-                </van-step>
-              </van-steps>
+              <template v-for="item in courseList">
+                <div :key="item.creaTime">
+                  <p class="re_lesson_title">{{item.liveTitle}}</p>
+                  <p class="re_lesson_time">主讲老师：{{item.teacherNames}}│{{item.creaTime}}</p>
+
+                  <van-steps
+                    direction="vertical"
+                    :active="item.curActive"
+                    active-color="#fed039"
+                    @click-step="changeLesson($event,item.liveCurriculaCourseId)"
+                  >
+                    <blockquote v-for="(item1,index) in item.innerCourse" :key="index">
+                      <van-step>
+                        <h3>{{item.liveTitle}}（{{index + 1}}）</h3>
+                      </van-step>
+                    </blockquote>
+                  </van-steps>
+                </div>
+              </template>
             </div>
             <!--  -->
-            <div class="re_play_directory_content">
+            <!-- <div class="re_play_directory_content">
               <p class="re_lesson_title">《素描作画思维拓展》--第一节</p>
               <p class="re_lesson_time">主讲老师：王小花│2020年8月3日│09：22</p>
-            </div>
+            </div>-->
           </div>
         </van-tab>
       </van-tabs>
@@ -66,15 +71,86 @@ export default {
   },
   data() {
     return {
+      isShowPlayer: false,
       active: 0,
-      correct: true
+      correct: true,
+      // 上个页面传入数据
+      prePage: {},
+      // 三四级列表数据
+      courseList: [],
+      // 视频对象
+      player: {
+        fileId: "",
+        appID: "",
+        videoTit: ""
+      }
     };
   },
-  created() {},
+  created() {
+    // console.log(this.$route.query);
+    this.prePage = this.$route.query;
+    this.getData();
+  },
   mounted() {},
   methods: {
-    changeLesson(index) {
-      console.log(index);
+    changeLesson(index, id) {
+      // console.log(index, id);
+      let arr = this.courseList.filter(
+        item => item.liveCurriculaCourseId === id
+      );
+      this.courseList.forEach(item => (item.curActive = -1));
+      arr[0].curActive = index;
+      // 获取当前视频所需数据
+      let { appID, fileId } = arr[0].innerCourse[index];
+      let videoTit = `${arr[0].liveTitle}(${index + 1})`;
+      this.player = { appID, fileId, videoTit };
+      // console.log(appID, fileId, videoTit);
+    },
+    // 获取三四级目录数据
+    async getData() {
+      let { twoId } = this.prePage;
+      let p = this.$user();
+      p.liveCurriculaCatalogueId = twoId;
+      let res = await this.$request.post("/app/live/courseList", p);
+      if (res.code !== 200) return this.$toast("数据获取失败");
+
+      // console.log(res);
+      res.data.forEach((item, index) => {
+        // console.log(item, index);
+        item.curActive = -1;
+        if (item.liveCurriculaCourseId + "" === this.prePage.threeId + "") {
+          item.curActive = 0;
+        }
+        // if (item.liveCurriculaCourseId + "" === this.prePage.threeId) {
+        //   console.log(123);
+        //   item.curActive = 0;
+        // }
+      });
+
+      let arr = res.data;
+      let courseData = await Promise.all(
+        arr.map(async item => {
+          let id = item.liveCurriculaCourseId;
+          p.liveCurriculaCourseId = id;
+          let res = await this.$request.post("/app/live/recordList", p);
+          if (res.code !== 200) return this.$toast("数据获取失败");
+          // console.log(res);
+          item.innerCourse = res.data;
+          return item;
+        })
+      );
+      this.courseList = courseData;
+      // console.log(courseData);
+      let curArr = courseData.filter(
+        item => item.liveCurriculaCourseId + "" === this.prePage.threeId + ""
+      );
+      console.log(curArr);
+      // 获取当前视频所需数据
+      let { appID, fileId } = curArr[0].innerCourse[0];
+      let videoTit = `${curArr[0].liveTitle}(1)`;
+      this.player = { appID, fileId, videoTit };
+      console.log(this.player);
+      this.isShowPlayer = true;
     }
   }
 };
@@ -124,9 +200,9 @@ export default {
     border-radius: 50%;
     height: 10px;
     width: 10px;
-    font-family:sans-serif;
+    font-family: sans-serif;
   }
-  /deep/ .van-step__circle{
+  /deep/ .van-step__circle {
     border-radius: 50%;
     font-size: 16px;
     height: 10px;

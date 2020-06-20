@@ -2,13 +2,16 @@
   <div>
     <div class="page">
       <div class="cover_img">
-        <img src="@/assets/images/img0.png" alt srcset />
+        <img :src="courseObj.imgSrc" alt srcset />
       </div>
       <div class="course_title">
-        <p>白泽在线测试直播专题课程（三）</p>
-        <p>
-          <span class="price_new">￥100</span>
-          <s class="price_old">￥200.00</s>
+        <p>{{courseObj.title}}</p>
+        <p v-if="!isPublic">
+          <span class="price_new">￥{{courseObj.price}}</span>
+          <s class="price_old">￥{{courseObj.orginPrice}}</s>
+        </p>
+        <p v-else>
+          <span class="publicCourse">公开课</span>
         </p>
       </div>
       <div class="tab_box">
@@ -25,24 +28,45 @@
           <van-tab title="课程介绍" title-style="font-size:.906667rem;">课程介绍</van-tab>
           <van-tab title="课程目录" title-style="font-size:.906667rem;">
             <div class="directory_content">
-              <div class="directory_title">
-                <div class="directory_title_text">01 素描课</div>
-                <div class="directory_title_sign">
-                  <van-icon name="arrow-down" />
-                </div>
-              </div>
-              <div class="directory_courses">
-                <p class="lesson_title">
-                  《素描作画思维拓展》--第一节
-                  <span @click="rePlay">
-                    <img src="@/assets/images/backLive.png" alt srcset />
-                    <span class="green">回放</span>
-                  </span>
-                </p>
-                <p class="lesson lesson_teacher">主讲老师：王小花</p>
-                <p class="lesson lesson_create_time">2020年8月3日│09：22</p>
-              </div>
-              <div class="directory_courses" @click="joinStudio">
+              <van-collapse v-model="activeNames">
+                <template v-for="item in courseList">
+                  <van-collapse-item
+                    :title="item.liveCurriculaCatalogueTitle"
+                    :name="item.liveCurriculaCatalogueId"
+                    :key="item.liveCurriculaCatalogueId"
+                  >
+                    <template v-for="item1 in item.innerCourse">
+                      <div class="directory_courses" :key="item1.creaTime">
+                        <p class="lesson_title">
+                          {{item1.liveTitle}}
+                          <span v-if="item1.liveStatus === 1">
+                            <img src="@/assets/images/playing.png" alt srcset />
+                            <span class="red">直播中...</span>
+                          </span>
+                          <span @click="rePlay(item1,item)" v-else-if="item1.liveStatus === 2">
+                            <img src="@/assets/images/backLive.png" alt srcset />
+                            <span class="green">回放</span>
+                          </span>
+                          <span @click="$toast('直播还未开始呦')" v-else>
+                            <img src="@/assets/images/untime.png" alt srcset />
+                            <span class="gray">未开始</span>
+                          </span>
+                        </p>
+                        <p class="lesson lesson_teacher">主讲老师：{{item1.teacherNames}}</p>
+                        <p class="lesson lesson_create_time">{{item1.creaTime}}</p>
+                      </div>
+                    </template>
+                  </van-collapse-item>
+                </template>
+              </van-collapse>
+              <!-- <div class="directory_title" :key="item.liveCurriculaCatalogueId">
+                  <div class="directory_title_text">{{item.liveCurriculaCatalogueTitle}}</div>
+                  <div class="directory_title_sign">
+                    <van-icon name="arrow-down" />
+                  </div>
+              </div>-->
+
+              <!-- <div class="directory_courses" @click="joinStudio">
                 <p class="lesson_title">
                   《素描作画思维拓展》--第一节
                   <span>
@@ -58,31 +82,32 @@
                   《素描作画思维拓展》--第一节
                   <span>
                     <img src="@/assets/images/untime.png" alt srcset />
-                    <span class="gray">回放</span>
+                    <span class="gray">未开始</span>
                   </span>
                 </p>
                 <p class="lesson lesson_teacher">主讲老师：王小花</p>
                 <p class="lesson lesson_create_time">2020年8月3日│09：22</p>
-              </div>
+              </div>-->
+              <!-- </template> -->
             </div>
           </van-tab>
         </van-tabs>
       </div>
     </div>
-
     <div class="footer flex_default">
       <div class="foot_left flex_default">
         <!-- <div class="collect_img">
           <van-icon name="like" />
           收藏
         </div>-->
-        <div class="advisory_img flex_default" @click="showAdvisory=!showAdvisory">
+        <div class="advisory_img flex_default" @click="consult">
           <img src="@/assets/images/advisory.png" alt srcset />
           <span>咨询</span>
         </div>
       </div>
       <div class="foot_right">
-        <div class="buy" @click="goBuy">立即购买</div>
+        <div class="buy" v-if="isPublic">加入直播课</div>
+        <div class="buy" @click="goBuy" v-else>立即购买</div>
       </div>
     </div>
 
@@ -115,10 +140,24 @@
 </template>
 
 <script>
+import formatDate from "../utils/formatDate.js";
 export default {
   name: "cuursePlayer",
   data() {
     return {
+      activeNames: [],
+      // 上个页面传输课件对象
+      courseObj: {
+        id: "",
+        title: "",
+        imgSrc: "",
+        price: "",
+        orginPrice: ""
+      },
+      // 是否为公开课
+      isPublic: false,
+      // 目录详情
+      courseList: [],
       active: 1,
       correct: true,
       showPopup: false,
@@ -126,7 +165,14 @@ export default {
       psd: ""
     };
   },
-  created() {},
+  created() {
+    let obj = this.$route.query;
+    this.courseObj = obj;
+    obj.price = obj.price + "";
+    this.isPublic = obj.price === "0" ? true : false;
+    // console.log(obj);
+    this.getPageData();
+  },
   mounted() {},
   methods: {
     joinStudio() {
@@ -138,6 +184,42 @@ export default {
        */
       this.showPopup = !this.showPopup;
     },
+    // 获取页面数据(目录)
+    async getPageData() {
+      let id = this.courseObj.id;
+      let p = this.$user();
+      p.liveCurriculaId = id;
+      // 获取目录
+      let res = await this.$request.post("/app/live/catalogueList", p);
+      if (res.code !== 200) return this.$toast("数据获取失败");
+      let arr = res.data;
+      // 获取内容
+      let courseList = await Promise.all(
+        arr.map(async item => {
+          let id = item.liveCurriculaCatalogueId;
+          p.liveCurriculaCatalogueId = id;
+          let res = await this.$request.post("/app/live/courseList", p);
+          if (res.code !== 200) return this.$toast("数据获取失败");
+          res.data.forEach(item => {
+            item.creaTime = formatDate(item.creaTime, "|");
+          });
+          item.innerCourse = res.data;
+          // console.log(res);
+          return item;
+        })
+      );
+      this.courseList = courseList;
+      this.activeNames[0] = courseList[0].liveCurriculaCatalogueId;
+      console.log(courseList);
+    },
+    // 咨询
+    consult() {
+      if (this.isPublic) {
+        this.showPopup = !this.showPopup;
+      } else {
+        this.showAdvisory = !this.showAdvisory;
+      }
+    },
     // 前往订单支付
     goBuy() {
       this.$router.push({
@@ -148,8 +230,31 @@ export default {
       });
     },
     // 前往回放
-    rePlay() {
-      this.$router.push("/rePlay");
+    async rePlay(data, item) {
+      console.log(data, item);
+      // 判断公开课 true 前往回放 false 提示购买
+      // if (!this.isPublic) return this.$toast("请先购买该课程！");
+      console.log(data);
+      let id = data.liveCurriculaCourseId;
+      let p = this.$user();
+      p.liveCurriculaCourseId = id;
+      // 获取目录 , 是否上传视频
+      let res = await this.$request.post("/app/live/recordList", p);
+      if (res.code !== 200) return this.$toast("数据获取失败");
+      console.log(res);
+      if (res.data.length === 0) return this.$toast("老师还未上传视频呦");
+
+      let { liveCurriculaTitle, liveCurriculaCourseId } = data;
+      let { liveCurriculaCatalogueTitle, liveCurriculaCatalogueId } = item;
+      this.$router.push({
+        path: "/rePlay",
+        query: {
+          oneTitle: liveCurriculaTitle,
+          twoTitle: liveCurriculaCatalogueTitle,
+          twoId: liveCurriculaCatalogueId,
+          threeId: liveCurriculaCourseId
+        }
+      });
     },
     // 前往直播间
     goLive() {
@@ -161,6 +266,10 @@ export default {
 
 <style lang="scss">
 @import "@/assets/css/global.scss";
+.publicCourse {
+  font-size: 22px;
+  color: #05c600;
+}
 .cover_img {
   width: 100%;
   height: 372px;
@@ -206,7 +315,7 @@ export default {
 .directory_courses {
   height: 191px;
   border-bottom: 1px solid #f1f1f1;
-  padding: 51px 0 0 54px;
+  padding: 51px 0 0 0px;
   .lesson_title {
     font-size: 28px;
     color: #525252;
@@ -214,6 +323,8 @@ export default {
     img {
       height: 26px;
       width: 26px;
+      vertical-align: middle;
+      margin-right: 8px;
     }
   }
   .lesson {
@@ -323,5 +434,23 @@ export default {
     font-size: 26px;
     color: #616161;
   }
+}
+
+.van-tab__pane,
+.van-tab__pane-wrapper {
+  padding-bottom: 1.333333rem;
+}
+.van-cell {
+  height: 1.973333rem;
+  padding: 0 1.066667rem;
+  line-height: 1.973333rem;
+}
+.van-collapse-item__content {
+  padding: 0;
+  padding-left: 1.333333rem;
+}
+.van-cell__left-icon,
+.van-cell__right-icon {
+  line-height: 1.973333rem;
 }
 </style>

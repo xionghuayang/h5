@@ -48,12 +48,14 @@ export default {
     },
     // 获取全部课程
     async getAllList() {
-      let p = {
-        status: " ",
-        roleId: "7",
-        rowid: 2376,
-        token: "ImkxM7Sh"
-      };
+      let p = this.$user();
+      p.status = " ";
+      // let p = {
+      //   status: " ",
+      //   roleId: "7",
+      //   rowid: 2376,
+      //   token: "ImkxM7Sh"
+      // };
       let res = await getCourse("/app/live/liveUserList", p);
       console.log(res);
       let newArr = res.map(item => {
@@ -66,24 +68,22 @@ export default {
     },
     // 直播中（未完结）
     async getInList() {
-      let p = {
-        status: "0",
-        roleId: "7",
-        rowid: 2376,
-        token: "ImkxM7Sh"
-      };
+      let p = this.$user();
+      p.status = "0";
       let res = await getCourse("/app/live/liveUserList", p);
       console.log(res);
       // this.overList = res;
     },
     // 已结束
     async getOverList() {
-      let p = {
-        status: "1",
-        roleId: "7",
-        rowid: 2376,
-        token: "ImkxM7Sh"
-      };
+      let p = this.$user();
+      p.status = "1";
+      // let p = {
+      //   status: "1",
+      //   roleId: "7",
+      //   rowid: 2376,
+      //   token: "ImkxM7Sh"
+      // };
       let res = await getCourse("/app/live/liveUserList", p);
       // console.log(res);
       this.overList = res;

@@ -4,6 +4,7 @@
     order {
       id 标识
       title 标题
+      imgSrc 图片
       isShowPrice 是否显示价格区域
       isPrice  true指定价格或 false 显示priceInfo
       priceInfo 公开课 / 直播中
@@ -15,7 +16,7 @@
   -->
   <div :class="border ? 'card van-hairline--bottom' : 'card'">
     <!-- <h1>order</h1> -->
-    <van-card :title="order.title" :thumb="order.imgSrc" @click="handleClick(order.price,order.id)">
+    <van-card :title="order.title" :thumb="order.imgSrc" @click="handleClick(order)">
       <template #price>
         <div v-show="order.isShowPrice">
           <p class="price" v-if="order.isPrice">
@@ -29,10 +30,12 @@
         </div>
       </template>
       <template #tags>
-        <p
-          class="info van-multi-ellipsis--l2"
-          v-if="order.info"
-        >主讲老师:{{order.info.tName}}︱共{{order.info.allNum}}节︱有{{order.info.num}}回放直播时间{{order.info.time}}</p>
+        <p class="info van-multi-ellipsis--l2" v-if="order.info">
+          主讲老师:{{order.info.tName}}︱共{{order.info.allNum}}节︱有{{order.info.num}}回放
+          <span
+            v-if="order.info.time"
+          >直播时间{{order.info.time}}</span>
+        </p>
       </template>
     </van-card>
   </div>
@@ -47,27 +50,38 @@ export default {
   mounted() {},
   methods: {
     // 点击前往页面
-    handleClick(price, id) {
-      console.log(id);
+    handleClick(order) {
+      console.log(order);
+      let { id, title, price, imgSrc, orginPrice } = order;
+      this.$router.push({
+        path: "/coursePlayer",
+        query: {
+          id,
+          title,
+          price,
+          imgSrc,
+          orginPrice
+        }
+      });
       // console.log(price);
-      if (price === 0) {
-        // console.log("前往公开课");
-        // this.$router.push(`/publicCourse?id=${id}`);
-        this.$router.push({
-          path: "/publicCourse",
-          query: {
-            id
-          }
-        });
-      } else {
-        // console.log("前往课程详情");
-        this.$router.push({
-          path: "/coursePlayer",
-          query: {
-            id
-          }
-        });
-      }
+      // if (price === 0) {
+      //   // console.log("前往公开课");
+      //   // this.$router.push(`/publicCourse?id=${id}`);
+      //   this.$router.push({
+      //     path: "/publicCourse",
+      //     query: {
+      //       id
+      //     }
+      //   });
+      // } else {
+      //   // console.log("前往课程详情");
+      //   this.$router.push({
+      //     path: "/coursePlayer",
+      //     query: {
+      //       id
+      //     }
+      //   });
+      // }
     }
   }
 };

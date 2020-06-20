@@ -13,12 +13,12 @@
     <div class="order-pay">
       <p>
         <i v-if="order.orderPay">已付款:</i>
-        <i v-else>未付款:</i>
+        <i v-else>待付款:</i>
         <span>￥{{order.price}}</span>
       </p>
     </div>
     <div class="order-pass" v-if="order.orderPass=== 'true'">交易成功</div>
-    <div class="order-pass" v-else-if="order.orderPass === 'error'">未付款</div>
+    <div class="order-pass" v-else-if="order.orderPass === 'error'">待付款</div>
     <div class="order-pass" v-else>交易取消</div>
   </div>
 </template>

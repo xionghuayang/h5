@@ -64,15 +64,21 @@ export default {
       //   };
       // });
       // console.log(allLiveList);
-      let p = {
-        liveStatus: "0",
-        roleId: "7",
-        rowid: 2376,
-        token: "ImkxM7Sh"
-      };
+      // let p = {
+      //   liveStatus: "0",
+      //   roleId: "7",
+      //   rowid: 2376,
+      //   token: "ImkxM7Sh"
+      // };
+      let p = this.$user();
+      p.liveStatus = "0";
       let allLiveList = await getCourse("/app/live/liveList", p);
       console.log(allLiveList);
-      this.classList = allLiveList;
+
+      this.classList = allLiveList.map(item => {
+        item.info.time = null;
+        return item;
+      });
     }
   }
 };

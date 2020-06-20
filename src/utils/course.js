@@ -1,6 +1,5 @@
 import $request from "@/config/request.js";// 导入我们的api接口
 import formatDate from "./formatDate";
-
 export default async function formatCourse(url, data = {}) {
   let res = await $request.post(url, data);
   // console.log(res);
@@ -10,8 +9,11 @@ export default async function formatCourse(url, data = {}) {
     let {
       liveCurriculaId,
       courseSize,
+      liveCurriculaCourseSize,
       recordSize,
+      liveCurriculaRecordSize,
       teacherName,
+      liveCurriculaTeacher,
       creaTime,
       imagePrefix,
       liveCurriculaTitle,
@@ -29,9 +31,9 @@ export default async function formatCourse(url, data = {}) {
       price: liveCurriculaPresentPrice,
       orginPrice: liveCurriculaOriginalPrice,
       info: {
-        tName: teacherName,
-        allNum: courseSize,
-        num: recordSize,
+        tName: teacherName || liveCurriculaTeacher,
+        allNum: courseSize || liveCurriculaCourseSize,
+        num: recordSize || liveCurriculaRecordSize,
         time: formatDate(creaTime)
       }
     };
