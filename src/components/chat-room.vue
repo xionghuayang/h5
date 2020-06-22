@@ -308,8 +308,8 @@ export default {
     overflow-x: hidden;
     overflow-y: hidden;
   }
-  /deep/ .van-field--min-height .van-field__control{
-      min-height: 0;
+  /deep/ .van-field--min-height .van-field__control {
+    min-height: 0;
   }
   .send {
     font-size: 28px;

@@ -10,6 +10,7 @@ const state = {
   profilePicture: '',
   stateTab: 0,//状态切换返回
   nickname: '',
+
   reloadPage: false,//判定刷新页面
   // bzWebSocket手动链接取地址上文 然后拼接下文
   bzSocketURL: base.bzSocketURL,
@@ -29,6 +30,10 @@ const state = {
   }
 };
 const mutations = {
+  // 刷新页面
+  reloadPage(state, data) {
+    state.reloadPage = data;
+  },
   loginSuccess(state, data) {
     localStorage.setItem("loginMsg", JSON.stringify(data));
     state.$userInfo = data

@@ -1,5 +1,5 @@
 import Vue from 'vue';
-// import $request from "@/config/request.js";// 导入我们的api接口
+import $request from "@/config/request.js";// 导入我们的api接口
 /*
 * 公共方法管理
 *
@@ -41,9 +41,9 @@ const _isMobile = () => {
  */
 const loginByToken = (obj) => {
     let p = getToken();
-    if(obj) p = obj;
+    if (obj) p = obj;
     return new Promise((resolve, reject) => {
-        $request.post("app/home/loginByToken",p).then(res => {
+        $request.post("app/home/loginByToken", p).then(res => {
             resolve(res)
         }).catch(err => {
             reject(err)
@@ -66,7 +66,7 @@ const getCurentTime = () => {
 }
 // 从字符串中提取数字  或者提取字符串中的汉字
 const strTakeNum = (val, type) => {
-    if(typeof val !== 'string') return '你所传入的非字符串'
+    if (typeof val !== 'string') return '你所传入的非字符串'
     if (type) {
         if (val != null && val != "") {
             let reg = /[\u4e00-\u9fa5]/g;

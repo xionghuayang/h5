@@ -4,12 +4,12 @@ import { Toast } from 'vant'; //提示组件
 class Pay {
     // 用户传入格式 { $user openid price liveCurriculaId }
     orderInfo = {
-        appid:'wx2aec8d2e0a62811f',
-        trade_type:'JSAPI',
-        openid:this.getOpenid()
+        appid: 'wx2aec8d2e0a62811f',
+        trade_type: 'JSAPI',
+        openid: this.getOpenid()
     };
     constructor(orderInfo) {
-        this.orderInfo =Object.assign(this.orderInfo,orderInfo);
+        this.orderInfo = Object.assign(this.orderInfo, orderInfo);
     }
     getPaySign() {
         return new Promise((resolve, reject) => {
@@ -55,7 +55,8 @@ class Pay {
         });
     }
     getOpenid() {
-        let openid = localStorage.getItem("openid");
+        // let openid = localStorage.getItem("openid");
+        let openid = "oU4nn1a - zt6af2J6BCUnl7xYaXUw";
         if (openid) return openid
         else {
             Toast.fail('获取支付参数失败，请重新登录！');

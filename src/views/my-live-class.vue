@@ -50,12 +50,6 @@ export default {
     async getAllList() {
       let p = this.$user();
       p.status = " ";
-      // let p = {
-      //   status: " ",
-      //   roleId: "7",
-      //   rowid: 2376,
-      //   token: "ImkxM7Sh"
-      // };
       let res = await getCourse("/app/live/liveUserList", p);
       console.log(res);
       let newArr = res.map(item => {
@@ -72,7 +66,15 @@ export default {
       p.status = "0";
       let res = await getCourse("/app/live/liveUserList", p);
       console.log(res);
-      // this.overList = res;
+      // 处理卡片显示格式-- 不显示价格 -- 不显示时间
+      let newArr = res.map(item => {
+        if (item.isPrice) {
+          item.isShowPrice = false;
+        }
+        item.info.time = null;
+        return item;
+      });
+      this.inList = res;
     },
     // 已结束
     async getOverList() {
@@ -84,9 +86,21 @@ export default {
       //   rowid: 2376,
       //   token: "ImkxM7Sh"
       // };
+
       let res = await getCourse("/app/live/liveUserList", p);
       // console.log(res);
-      this.overList = res;
+      // 处理卡片显示格式-- 不显示价格 -- 不显示时间
+      let newArr = res.map(item => {
+        if (item.isPrice) {
+          item.isShowPrice = false;
+        }
+        item.info.time = null;
+        return item;
+      });
+      console.log(newArr);
+      this.overList = newArr;
+
+      // this.overList = res;
     }
   }
 };

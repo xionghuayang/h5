@@ -11,6 +11,7 @@
       price 实际价格
       orginPrice 原价
       info 主讲教师
+      state 0 // 列表 1 商品
     }
     border 下边框
   -->
@@ -52,36 +53,28 @@ export default {
     // 点击前往页面
     handleClick(order) {
       console.log(order);
-      let { id, title, price, imgSrc, orginPrice } = order;
+      let { id, state } = order;
+      // state = 1 订单页面
+      if (state === 1) return;
       this.$router.push({
         path: "/coursePlayer",
         query: {
-          id,
-          title,
-          price,
-          imgSrc,
-          orginPrice
+          id
         }
       });
-      // console.log(price);
-      // if (price === 0) {
-      //   // console.log("前往公开课");
-      //   // this.$router.push(`/publicCourse?id=${id}`);
-      //   this.$router.push({
-      //     path: "/publicCourse",
-      //     query: {
-      //       id
-      //     }
-      //   });
-      // } else {
-      //   // console.log("前往课程详情");
-      //   this.$router.push({
-      //     path: "/coursePlayer",
-      //     query: {
-      //       id
-      //     }
-      //   });
-      // }
+      // this.$router.push({
+      //   path: "/coursePlayer",
+      //   query: {
+      //     id,
+      //     title,
+      //     price,
+      //     imgSrc,
+      //     orginPrice,
+      //     phoneNum,
+      //     isHaveCourse,
+      //     removeId
+      //   }
+      // });
     }
   }
 };
@@ -116,6 +109,7 @@ export default {
   line-height: 18px;
   margin-bottom: 0.266667rem;
   font-size: 0.746667rem;
+  height: 1.866667rem;
 }
 // 价格
 .price {
@@ -140,6 +134,8 @@ export default {
 .info {
   font-size: 22px;
   color: #bbb;
-  margin-bottom: 0.08rem;
+  // margin-bottom: 0.533333rem;
+  line-height: 0.906667rem;
+  // height: 1.76rem;
 }
 </style>

@@ -37,7 +37,6 @@ export default {
   right: 53px;
   img {
     height: 104px;
-    width: 104px;
   }
   .reservation {
     margin-top: 15px;

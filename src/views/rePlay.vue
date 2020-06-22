@@ -3,7 +3,7 @@
     <player :play="player" v-if="isShowPlayer"></player>
     <!-- <player :play="player"></player> -->
     <div class="player_navbar">
-      <player-navbar status="2" :peopleNum="2"></player-navbar>
+      <player-navbar :status="'2'" :peopleNum="2"></player-navbar>
     </div>
     <div class="tab_box">
       <van-tabs
@@ -22,9 +22,10 @@
               <p>{{prePage.oneTitle}}</p>
               <p>
                 {{prePage.twoTitle}}
-                <span class="arrow_up">
+                <!-- 下拉 -->
+                <!-- <span class="arrow_up">
                   <van-icon name="arrow-up" />
-                </span>
+                </span>-->
               </p>
             </div>
             <div class="re_play_directory_content">
@@ -32,15 +33,14 @@
                 <div :key="item.creaTime">
                   <p class="re_lesson_title">{{item.liveTitle}}</p>
                   <p class="re_lesson_time">主讲老师：{{item.teacherNames}}│{{item.creaTime}}</p>
-
                   <van-steps
                     direction="vertical"
                     :active="item.curActive"
                     active-color="#fed039"
                     @click-step="changeLesson($event,item.liveCurriculaCourseId)"
                   >
-                    <blockquote v-for="(item1,index) in item.innerCourse" :key="index">
-                      <van-step>
+                    <blockquote>
+                      <van-step v-for="(item1,index) in item.innerCourse" :key="index">
                         <h3>{{item.liveTitle}}（{{index + 1}}）</h3>
                       </van-step>
                     </blockquote>
@@ -48,11 +48,6 @@
                 </div>
               </template>
             </div>
-            <!--  -->
-            <!-- <div class="re_play_directory_content">
-              <p class="re_lesson_title">《素描作画思维拓展》--第一节</p>
-              <p class="re_lesson_time">主讲老师：王小花│2020年8月3日│09：22</p>
-            </div>-->
           </div>
         </van-tab>
       </van-tabs>
@@ -88,6 +83,7 @@ export default {
   },
   created() {
     // console.log(this.$route.query);
+    // console.log(this.$store.state.reloadPage);
     this.prePage = this.$route.query;
     this.getData();
   },
@@ -113,9 +109,11 @@ export default {
       p.liveCurriculaCatalogueId = twoId;
       let res = await this.$request.post("/app/live/courseList", p);
       if (res.code !== 200) return this.$toast("数据获取失败");
-
-      // console.log(res);
-      res.data.forEach((item, index) => {
+      // console.log(res, "-----");
+      // 只保留回放数据
+      let replayArr = res.data.filter(item => item.liveStatus === 2);
+      // console.log(replayArr);
+      replayArr.forEach((item, index) => {
         // console.log(item, index);
         item.curActive = -1;
         if (item.liveCurriculaCourseId + "" === this.prePage.threeId + "") {
@@ -127,9 +125,9 @@ export default {
         // }
       });
 
-      let arr = res.data;
+      // let arr = res.data;
       let courseData = await Promise.all(
-        arr.map(async item => {
+        replayArr.map(async item => {
           let id = item.liveCurriculaCourseId;
           p.liveCurriculaCourseId = id;
           let res = await this.$request.post("/app/live/recordList", p);
@@ -200,7 +198,11 @@ export default {
     border-radius: 50%;
     height: 10px;
     width: 10px;
+    // -webkit-tap-highlight-color: transparent;
     font-family: sans-serif;
+  }
+  /deep/ .van-icon-checked::before {
+    content: " ";
   }
   /deep/ .van-step__circle {
     border-radius: 50%;

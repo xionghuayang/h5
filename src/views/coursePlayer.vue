@@ -6,13 +6,15 @@
       </div>
       <div class="course_title">
         <p>{{courseObj.title}}</p>
-        <p v-if="!isPublic">
-          <span class="price_new">￥{{courseObj.price}}</span>
-          <s class="price_old">￥{{courseObj.orginPrice}}</s>
-        </p>
-        <p v-else>
-          <span class="publicCourse">公开课</span>
-        </p>
+        <div v-show="isPay == 0">
+          <p v-if="!isPublic">
+            <span class="price_new">￥{{courseObj.price}}</span>
+            <s class="price_old">￥{{courseObj.orginPrice}}</s>
+          </p>
+          <p v-else>
+            <span class="publicCourse">公开课</span>
+          </p>
+        </div>
       </div>
       <div class="tab_box">
         <van-tabs
@@ -25,7 +27,9 @@
           title-active-color="#262626"
           title-inactive-color="#262626"
         >
-          <van-tab title="课程介绍" title-style="font-size:.906667rem;">课程介绍</van-tab>
+          <van-tab title="课程介绍" title-style="font-size:.906667rem;">
+            <div v-html="courseObj.courseInfo || '暂无课程介绍'"></div>
+          </van-tab>
           <van-tab title="课程目录" title-style="font-size:.906667rem;">
             <div class="directory_content">
               <van-collapse v-model="activeNames">
@@ -37,21 +41,35 @@
                   >
                     <template v-for="item1 in item.innerCourse">
                       <div class="directory_courses" :key="item1.creaTime">
-                        <p class="lesson_title">
-                          {{item1.liveTitle}}
-                          <span v-if="item1.liveStatus === 1">
-                            <img src="@/assets/images/playing.png" alt srcset />
-                            <span class="red">直播中...</span>
-                          </span>
-                          <span @click="rePlay(item1,item)" v-else-if="item1.liveStatus === 2">
-                            <img src="@/assets/images/backLive.png" alt srcset />
-                            <span class="green">回放</span>
-                          </span>
-                          <span @click="$toast('直播还未开始呦')" v-else>
-                            <img src="@/assets/images/untime.png" alt srcset />
-                            <span class="gray">未开始</span>
-                          </span>
-                        </p>
+                        <div class="lesson_title">
+                          <!-- 直播中 --  -->
+                          <div
+                            v-if="item1.liveStatus === 1"
+                            @click="joinStudio(item1.liveCurriculaCourseId)"
+                          >
+                            {{item1.liveTitle}}
+                            <span>
+                              <img src="@/assets/images/playing.png" alt srcset />
+                              <span class="red">直播中...</span>
+                            </span>
+                          </div>
+                          <!-- 回放 -->
+                          <div @click="rePlay(item1,item)" v-else-if="item1.liveStatus === 2">
+                            {{item1.liveTitle}}
+                            <span>
+                              <img src="@/assets/images/backLive.png" alt srcset />
+                              <span class="green">回放</span>
+                            </span>
+                          </div>
+                          <!-- 未开始 -->
+                          <div @click="$toast('直播还未开始呦')" v-else>
+                            {{item1.liveTitle}}
+                            <span>
+                              <img src="@/assets/images/untime.png" alt srcset />
+                              <span class="gray">未开始</span>
+                            </span>
+                          </div>
+                        </div>
                         <p class="lesson lesson_teacher">主讲老师：{{item1.teacherNames}}</p>
                         <p class="lesson lesson_create_time">{{item1.creaTime}}</p>
                       </div>
@@ -59,36 +77,6 @@
                   </van-collapse-item>
                 </template>
               </van-collapse>
-              <!-- <div class="directory_title" :key="item.liveCurriculaCatalogueId">
-                  <div class="directory_title_text">{{item.liveCurriculaCatalogueTitle}}</div>
-                  <div class="directory_title_sign">
-                    <van-icon name="arrow-down" />
-                  </div>
-              </div>-->
-
-              <!-- <div class="directory_courses" @click="joinStudio">
-                <p class="lesson_title">
-                  《素描作画思维拓展》--第一节
-                  <span>
-                    <img src="@/assets/images/playing.png" alt srcset />
-                    <span class="red">直播中...</span>
-                  </span>
-                </p>
-                <p class="lesson lesson_teacher">主讲老师：王小花</p>
-                <p class="lesson lesson_create_time">2020年8月3日│09：22</p>
-              </div>
-              <div class="directory_courses">
-                <p class="lesson_title">
-                  《素描作画思维拓展》--第一节
-                  <span>
-                    <img src="@/assets/images/untime.png" alt srcset />
-                    <span class="gray">未开始</span>
-                  </span>
-                </p>
-                <p class="lesson lesson_teacher">主讲老师：王小花</p>
-                <p class="lesson lesson_create_time">2020年8月3日│09：22</p>
-              </div>-->
-              <!-- </template> -->
             </div>
           </van-tab>
         </van-tabs>
@@ -106,8 +94,20 @@
         </div>
       </div>
       <div class="foot_right">
-        <div class="buy" v-if="isPublic">加入直播课</div>
-        <div class="buy" @click="goBuy" v-else>立即购买</div>
+        <!-- <div
+          class="buy"
+          v-if="isPublic"
+          @click="joinInCourse(courseObj.id,courseObj.removeId)"
+        >{{btnState[btnIndex]}}</div>
+        <div
+          class="buy"
+          @click="joinInCourse(courseObj.id,courseObj.removeId)"
+          v-else
+        >{{btnState[btnIndex]}}</div>-->
+        <div
+          class="buy"
+          @click="joinInCourse(courseObj.id,courseObj.removeId)"
+        >{{btnState[btnIndex]}}</div>
       </div>
     </div>
 
@@ -118,7 +118,7 @@
           <p class="sign_text">请点击课程中的“咨询”按钮联系客服获取密码</p>
           <div class="pop_btn flex_default">
             <div @click="showPopup=!showPopup">取消</div>
-            <div @click="goLive">确定</div>
+            <div @click="goLive(courseObj.id)">确定</div>
           </div>
         </div>
       </van-popup>
@@ -132,7 +132,7 @@
       >
         <div>
           <p>课程咨询电话</p>
-          <a href="tel:18548615548">18548615548</a>
+          <a href="tel:18548615548">{{courseObj.phoneNum}}</a>
         </div>
       </van-popup>
     </div>
@@ -141,48 +141,152 @@
 
 <script>
 import formatDate from "../utils/formatDate.js";
+import getCourse from "../utils/course";
+import Pay from "../assets/js/pay";
+let btnState = {
+  0: "加入直播课",
+  1: "立即购买",
+  2: "已加入",
+  3: "待支付"
+};
 export default {
   name: "cuursePlayer",
   data() {
     return {
       activeNames: [],
-      // 上个页面传输课件对象
-      courseObj: {
-        id: "",
-        title: "",
-        imgSrc: "",
-        price: "",
-        orginPrice: ""
-      },
+      // 页面中一级id课件对象
+      courseObj: {},
       // 是否为公开课
       isPublic: false,
+      btnState,
+      btnIndex: 0,
+      // 用户已购买(拥有)课程
+      isPay: 0, // 0 未拥有 1 已拥有
       // 目录详情
       courseList: [],
       active: 1,
       correct: true,
       showPopup: false,
       showAdvisory: false,
-      psd: ""
+      // 直播室密码
+      psd: "",
+      // 待支付参数
+      Payparams: {},
+      newPwd: "",
+      liveId: ""
     };
   },
-  created() {
-    let obj = this.$route.query;
-    this.courseObj = obj;
-    obj.price = obj.price + "";
-    this.isPublic = obj.price === "0" ? true : false;
-    // console.log(obj);
-    this.getPageData();
+  async created() {
+    // 清空课程路径
+    localStorage.removeItem("coursePath");
+    // 获取链接数据
+    let { id } = this.$route.query;
+    // 根据一级id获取数据 courseObj
+    this.getDataByOneId(id);
   },
   mounted() {},
   methods: {
-    joinStudio() {
+    // 根据一级id获取数据 id
+    async getDataByOneId(id) {
+      let p = this.$user();
+      p.liveCurriculaId = id;
+      // 获取目录
+      let res = await getCourse("/app/live/liveList", p);
+      console.log(res, "-----");
+      res[0].price = res[0].price + "";
+      this.courseObj = res[0];
+      // 判断是否为公开课
+      this.isPublic = this.courseObj.price === "0" ? true : false;
+      this.btnIndex = this.isPublic ? 0 : 1;
+      // console.log(obj);
+      // 获取目录数据
+      this.getPageData();
+      // 登录用户数据更改
+      this.isLogin(id);
+    },
+    // 判断用户是否登录
+    isLogin(id) {
+      let user = this.$user();
+      // let id = this.courseObj.id;
+      if (user.token) {
+        // 用户已登录,获取用户拥有该课程数据
+        this.getUserCourse(id);
+        // 待支付状态
+        this.getPayPending(id);
+      }
+    },
+    // 获取待支付
+    async getPayPending(id) {
+      // 获取待支付状态
+      let p = this.$user();
+      p.liveCurriculaId = id;
+      let res = await this.$request.post("/app/live/myLivePayInfo", p);
+      if (res.code !== 200) return this.$toast("数据获取失败");
+      let status = res.data.status; // 2 待支付
+      if (status === 2) {
+        this.btnIndex = 3;
+        try {
+          this.Payparams = JSON.parse(res.data.liveCurriculaParameters);
+        } catch (res) {
+          console.log(res, "-----");
+        }
+      }
+    },
+    // 进入直播间
+    joinStudio(id) {
       /**
        * @param:{ name1 } { String } @description
        * @param:{ name2 } { String } @description
        * @return any... { String }
        * @description 进入直播间
        */
-      this.showPopup = !this.showPopup;
+      this.liveId = id;
+      if (this.isPublic) {
+        // 公共课，输入密码前往直播间观看
+        this.getLivePwd(id);
+      } else if (this.isPay == 0) {
+        // 付费课未购买
+        this.$toast("请购买后观看直播");
+      } else {
+        // 已购买，直接前往直播间
+        this.goLive(this.courseObj.id);
+      }
+    },
+    // 获取直播间密码
+    async getLivePwd(id) {
+      let p = this.$user();
+      p.liveCurriculaCourseId = id;
+      // 获取目录
+      let res = await this.$request.post("/app/live/courseInfo", p);
+      // console.log(res, "======");
+      if (res.code !== 200) return this.$toast("密码获取失败");
+      this.newPwd = res.data.livePassword;
+      if (this.newPwd) {
+        // 有密码，输入密码
+        this.showPopup = !this.showPopup;
+      } else {
+        // 没有密码，直接观看
+        this.goLive(this.courseObj.id);
+      }
+    },
+    // 前往直播间
+    goLive(id) {
+      // console.log(id);
+      // 公开课，需要密码 ，密码错误
+      if (this.isPublic && this.newPwd && this.psd.trim() != this.newPwd) {
+        this.showPopup = !this.showPopup;
+        this.psd = "";
+        return this.$toast("密码输入错误");
+      }
+      // 密码正确，已付费课，不用密码
+      this.$router.push({
+        path: "/playing",
+        query: {
+          oneId: id,
+          liveCurriculaCourseId: this.liveId
+          // imgSrc: this.courseObj.imgSrc
+        }
+      });
     },
     // 获取页面数据(目录)
     async getPageData() {
@@ -204,41 +308,139 @@ export default {
             item.creaTime = formatDate(item.creaTime, "|");
           });
           item.innerCourse = res.data;
+          console.log(item.innerCourse);
           // console.log(res);
           return item;
         })
       );
       this.courseList = courseList;
       this.activeNames[0] = courseList[0].liveCurriculaCatalogueId;
-      console.log(courseList);
+      // console.log(courseList);
+    },
+    // 获取登录用户的是否购买该课程
+    async getUserCourse(id) {
+      this.isPay = this.courseObj.isHaveCourse + "" == "false" ? 0 : 1;
+      // console.log(this.isPay);
+      if (this.isPay == 1) {
+        this.btnIndex = 2;
+      } else {
+        if (this.isPublic) {
+          this.btnIndex = 0;
+        } else {
+          this.btnIndex = 1;
+        }
+      }
+    },
+    // 加入我的课程
+    async joinInCourse(id, rid) {
+      console.log(id, rid);
+      // 已购买的付费课
+      if (!this.isPublic && this.isPay == 1) {
+        this.$toast("该课程为付费课");
+        return;
+      }
+      // 公开课已加入学习
+      if (this.isPublic && this.btnIndex === 2) {
+        this.$dialog
+          .confirm({
+            title: "",
+            message: "是否移除该课程？"
+          })
+          .then(res => {
+            // on confirm
+            this.removeCourse(rid);
+            this.btnIndex = 0;
+            this.isPay = 0;
+          })
+          .catch(res => {
+            // on cancel
+            this.$toast("取消移除");
+          });
+      } else if (this.isPublic && this.btnIndex === 0) {
+        // 公开课未加入学习，加入学习
+        this.addCourse(id);
+        this.btnIndex = 2;
+        this.isPay = 1;
+      } else {
+        // 付费课,前往支付
+
+        if (this.btnIndex === 3) {
+          // 待支付，立即支付
+          this.buy();
+        } else {
+          this.goBuy();
+        }
+      }
+    },
+    // 加入课程
+    async addCourse(id) {
+      let p = this.$user();
+      p.liveCurriculaId = id;
+      let res = await this.$request.post("/app/live/userSignUp", p);
+      console.log(res);
+      if (res.code !== 200) return this.$toast("请登录");
+      this.$toast.success("加入成功");
+    },
+    // 移除课程
+    async removeCourse(id) {
+      let p = this.$user();
+      p.liveCurriculaUserId = id;
+      let res = await this.$request.post("/app/live/noUserSignUp", p);
+      console.log(res);
+      if (res.code !== 200) return this.$toast("移除失败");
+      this.$toast.success("移除成功");
     },
     // 咨询
     consult() {
-      if (this.isPublic) {
-        this.showPopup = !this.showPopup;
-      } else {
-        this.showAdvisory = !this.showAdvisory;
-      }
+      this.showAdvisory = !this.showAdvisory;
     },
     // 前往订单支付
     goBuy() {
-      this.$router.push({
-        path: "/courseorder",
-        query: {
-          id: this.$route.query.id
-        }
-      });
+      let user = this.$user();
+      let { id, title, imgSrc, price, orginPrice } = this.courseObj;
+      if (user.token) {
+        // 用户已登录,前往支付
+
+        this.$router.push({
+          path: "/courseorder",
+          query: { id, title, imgSrc, price, orginPrice }
+        });
+      } else {
+        // 前往登录
+        let link = location.href;
+        localStorage.setItem("coursePath", link);
+        this.$router.push("/login");
+      }
+    },
+    // 立即支付
+    buy() {
+      // console.log(123);
+      let data = this.Payparams;
+      let wxPay = new Pay({});
+      // @param:{data }  --->  预下单参数  重新拉起支付
+      wxPay
+        .payment(data)
+        .then(res => {
+          alert("then");
+          alert(JSON.stringify(res));
+        })
+        .catch(err => {
+          alert("error");
+          alert(JSON.stringify(err));
+        });
     },
     // 前往回放
     async rePlay(data, item) {
-      console.log(data, item);
+      // console.log(data, item);
       // 判断公开课 true 前往回放 false 提示购买
-      // if (!this.isPublic) return this.$toast("请先购买该课程！");
-      console.log(data);
+      if (!this.isPublic && this.isPay == 1)
+        return this.$toast("请先购买该课程！");
+
+      // console.log(data);
       let id = data.liveCurriculaCourseId;
       let p = this.$user();
       p.liveCurriculaCourseId = id;
-      // 获取目录 , 是否上传视频
+      // 获取目录 , 判断有无上传视频
       let res = await this.$request.post("/app/live/recordList", p);
       if (res.code !== 200) return this.$toast("数据获取失败");
       console.log(res);
@@ -246,6 +448,9 @@ export default {
 
       let { liveCurriculaTitle, liveCurriculaCourseId } = data;
       let { liveCurriculaCatalogueTitle, liveCurriculaCatalogueId } = item;
+      // 刷新回放页面
+      this.$store.commit("reloadPage", true);
+      // 前往回放
       this.$router.push({
         path: "/rePlay",
         query: {
@@ -255,10 +460,6 @@ export default {
           threeId: liveCurriculaCourseId
         }
       });
-    },
-    // 前往直播间
-    goLive() {
-      this.$router.push("/playing");
     }
   }
 };
@@ -314,7 +515,7 @@ export default {
 }
 .directory_courses {
   height: 191px;
-  border-bottom: 1px solid #f1f1f1;
+  // border-bottom: 1px solid #f1f1f1;
   padding: 51px 0 0 0px;
   .lesson_title {
     font-size: 28px;
@@ -439,6 +640,7 @@ export default {
 .van-tab__pane,
 .van-tab__pane-wrapper {
   padding-bottom: 1.333333rem;
+  overflow: hidden;
 }
 .van-cell {
   height: 1.973333rem;

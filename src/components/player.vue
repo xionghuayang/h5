@@ -22,6 +22,7 @@ export default {
   beforeCreate() {
     if (this.$store.state.reloadPage) {
       location.reload();
+      // this.$store.commit("reloadPage", false);
     }
   },
 
@@ -41,6 +42,23 @@ export default {
     if (Obj.videoTit) document.title = Obj.videoTit;
     this.initVideo(Obj.fileId, Obj.appID);
   },
+  watch: {
+    play() {
+      console.log(this.play);
+      console.log(this.player);
+      let Obj = this.play;
+      if (Obj.videoTit) document.title = Obj.videoTit;
+      this.player.loadVideoByID({
+        fileID: Obj.fileId, // 请传入需要播放的视频 filID（必须）
+        appID: Obj.appID // 请传入点播账号的 appID（必须）
+      });
+      this.player.on("canplay", res => {
+        // 做一些处理
+        // console.log(123);
+        this.player.play();
+      });
+    }
+  },
   methods: {
     initVideo(fileId, appID) {
       // 执行
@@ -53,6 +71,8 @@ export default {
       });
       this.player.on("ready", res => {
         // 做一些处理
+        // console.log(123);
+        this.player.play();
       });
     }
   }

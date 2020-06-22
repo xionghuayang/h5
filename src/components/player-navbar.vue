@@ -20,7 +20,7 @@
           <img src="@/assets/images/backLive.png" alt srcset />
           <span class="green">回放</span>
           <span>|</span>
-          <span class="study_num"> {{peopleNum}} 人已学习</span>
+          <span class="study_num">{{peopleNum}} 人已学习</span>
         </div>
         <div class="player_navbar_r flex_default">
           <img src="@/assets/images/beisu.png" alt srcset />倍数
@@ -59,6 +59,7 @@ export default {
   border-bottom: 1px solid #f1f1f1;
   padding: 0 49px 0 52px;
   box-sizing: border-box;
+  background-color: #fff;
   .player_navbar_l {
     height: 100%;
     font-size: 22px;

@@ -1,7 +1,10 @@
 <template>
   <div class="share">
     <div class="contentbox">
-      <div class="content" :style="'background-color:'+bgImgObj.bgc">
+      <div id="canvas" style="position:absolute;">
+        <img :src="canvasImg" alt class="shareImg" />
+      </div>
+      <div id="capture" class="content" :style="'background-color:'+bgImgObj.bgc">
         <img :src="require('../assets/images/' +bgImgObj.imgSrc)" alt class="shareImg" />
         <div class="main">
           <!-- 推荐 -->
@@ -78,6 +81,7 @@
 </template>
 <script>
 import Clipboard from "clipboard";
+import Canvas from "html2canvas";
 import Share from "../assets/js/share";
 let mapImg = [
   {
@@ -127,12 +131,24 @@ export default {
         title: "白泽在线素描人物测试直播专题课 程（三）",
         imgSrc: require("../assets/images/sharecontent.png"),
         code: require("../assets/images/qrcode.png")
-      }
+      },
+      canvasImg: "",//图片
+      info:[],
     };
   },
   created() {
     this.randomBg();
     this.share();
+    this.getCourseInfo();
+    this.$toast.loading({
+      message: "海报生成中...",
+      forbidClick: true,
+      loadingType: "spinner",
+      duration:0
+    });
+    setTimeout(() => {
+      this.toImage();
+    }, 1000);
   },
   methods: {
     // 随机背景
@@ -153,17 +169,11 @@ export default {
       let _that = this;
       let clipboard = new Clipboard(".copyBtn");
       clipboard.on("success", function(e) {
-        // console.info("Action:", e.action);
-        // console.info("Text:", e.text);
-        // console.info("Trigger:", e.trigger);
         _that.$toast.success("复制成功");
         _that.showPopup = false;
         e.clearSelection();
       });
       clipboard.on("error", function(e) {
-        // console.error("Action:", e.action);
-        // console.error("Trigger:", e.trigger);
-        // alert("复制失败");
         _that.$toast.fail("复制失败");
       });
     },
@@ -178,11 +188,36 @@ export default {
       };
       let wxShare = new Share();
       wxShare.init(_obj);
+    },
+    toImage() {
+      Canvas(document.querySelector("#capture")).then(canvas => {
+        this.canvasImg = canvas.toDataURL("image/png");
+        this.$toast.clear();
+      }).catch(err=>{
+        this.$toast.clear();
+      });
+    },
+    getCourseInfo(){
+      let p = this.$user();
+      p.liveCurriculaId = 3;
+        this.$request.post("/app/live/liveList", p).then(res=>{
+          console.log(res)
+          this.info = res.data.records[0];
+          console.log(this.$store.state.profilePicture);
+        });
     }
   }
 };
 </script>
 <style scoped lang="scss">
+#canvas {
+  width: 660px;
+  height: 950px;
+  img {
+    width: 100%;
+    height: 100%;
+  }
+}
 .share {
   // width: 100vw;
   // padding: 20px 45px 0;
@@ -192,14 +227,17 @@ export default {
 }
 .contentbox {
   display: flex;
+  width: 100%;
   justify-content: center;
   align-items: center;
   height: 80vh;
+  overflow: hidden;
 }
 .content {
   position: relative;
+  left: 100%;
   width: 660px;
-  height: 950px;
+  height: 1020px;
   // background-color: #060606;
   border-radius: 10px;
   overflow: hidden;
@@ -212,10 +250,9 @@ export default {
     top: 190px;
     left: 50px;
     width: 560px;
-    height: 714px;
     background: #fff;
     border-radius: 10px;
-    padding: 0 64px;
+    padding: 32px 64px;
     box-sizing: border-box;
   }
 }
@@ -263,9 +300,11 @@ export default {
   width: 433px;
   height: 254px;
   border-radius: 6px;
+  overflow: hidden;
   margin-top: 5px;
   img {
     width: 100%;
+    border-radius: 6px;
     height: 100%;
   }
 }
@@ -289,6 +328,7 @@ export default {
   .code-desc {
     font-size: 20px;
     color: #060606;
+    margin-top: 10px;
   }
 }
 .bottom {

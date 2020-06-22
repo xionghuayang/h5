@@ -35,12 +35,14 @@ axios.defaults.timeout = 10000;
 // })
 // 相应拦截 服务器返回结果时候判断再返回
 axios.interceptors.response.use(res => {
+    // console.log(res);
     if (res.status === 200) {
         if (res.data.code == 406) {
             Toast(res.data.message)
             localStorage.removeItem("loginMsg");
             setTimeout(() => {
-                location.href = 'https://www.baizezaixian.com/H5/#/pages/login/login'
+                location.href = '#/login';
+                // location.href = 'https://www.baizezaixian.com/H5/#/pages/login/login'
             }, 1000);
         }
         return res.data
