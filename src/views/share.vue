@@ -13,23 +13,23 @@
           </div>
           <!-- 头像 -->
           <div class="avatar">
-            <img :src="shareObj.avatar" />
+            <img :src="$store.state.profilePicture + '?r=' + Math.random()" crossorigin="anonymous" />
           </div>
           <!-- 描述 -->
-          <p class="desc">{{shareObj.desc}}</p>
+          <p class="desc">{{userName}}邀请你一起看直播课</p>
           <!-- 标题 -->
-          <p class="title">{{shareObj.title}}</p>
+          <p class="title">{{parInfo.liveCurriculaTitle}}</p>
           <!-- 图片 -->
           <div class="mainImg">
-            <img :src="shareObj.imgSrc" alt />
+            <img :src="info.imgSrc" alt crossorigin="anonymous" />
           </div>
           <!-- code -->
           <div class="qr">
             <div class="info">扫码看视频</div>
             <div class="code">
-              <img :src="shareObj.code" alt />
+              <div v-html="$route.query.teacherQrCode"></div>
             </div>
-            <div class="code-desc">来自『郑州八一画室』</div>
+            <div class="code-desc">来自『{{$route.query.orgName}}』</div>
           </div>
         </div>
       </div>
@@ -124,31 +124,33 @@ export default {
         imgSrc: "share2.png"
       },
       showPopup: false,
-      link: "https://www.iconfont.cn/user/detail111/fafafa/fafaf/faasfaa",
-      shareObj: {
-        avatar: require("../assets/images/shareheader.png"),
-        desc: "杜拉拉邀请你一起看直播课",
-        title: "白泽在线素描人物测试直播专题课 程（三）",
-        imgSrc: require("../assets/images/sharecontent.png"),
-        code: require("../assets/images/qrcode.png")
-      },
-      canvasImg: "",//图片
-      info:[],
+      link: this.$route.query.shareUrl,
+      // shareObj: {
+      //   desc: "杜拉拉邀请你一起看直播课",
+      //   title: "白泽在线素描人物测试直播专题课 程（三）",
+      //   imgSrc: require("../assets/images/sharecontent.png"),
+      //   code: require("../assets/images/qrcode.png")
+      // },
+      canvasImg: "", //图片
+      info: [],
+      parInfo: [],
+      userName: ""
     };
   },
   created() {
+    this.$public.loginByToken();
+    this.$store.commit("getUserProfilePicture");
+    // console.log(this.$store.state.$userInfo);
+    // console.log(this.$route.query.teacherQrCode);
+    this.userName = this.$store.state.$userInfo.nickname;
     this.randomBg();
-    this.share();
-    this.getCourseInfo();
+    this.getCourseInfo(24);
     this.$toast.loading({
       message: "海报生成中...",
       forbidClick: true,
       loadingType: "spinner",
-      duration:0
+      duration: 0
     });
-    setTimeout(() => {
-      this.toImage();
-    }, 1000);
   },
   methods: {
     // 随机背景
@@ -178,33 +180,75 @@ export default {
       });
     },
     // 分享数据
-    share() {
+    share(title, imgScr, desc) {
       // 获取页面数据
       let _obj = {
-        title: "小枫枫呀",
-        imgScr: "https://www.baizezaixian.com/demo/img/img0.263ffcef.png",
-        desc: "小枫枫是一个前端开发的弟中弟，踩坑的小白鼠",
-        link: ""
+        title: title,
+        imgScr: imgScr,
+        desc: desc,
+        link: this.$route.query.shareUrl
       };
       let wxShare = new Share();
       wxShare.init(_obj);
     },
     toImage() {
-      Canvas(document.querySelector("#capture")).then(canvas => {
-        this.canvasImg = canvas.toDataURL("image/png");
-        this.$toast.clear();
-      }).catch(err=>{
-        this.$toast.clear();
+      Canvas(document.querySelector("#capture"), { useCORS: true })
+        .then(canvas => {
+          this.canvasImg = canvas.toDataURL("image/png");
+          this.$toast.clear();
+        })
+        .catch(err => {
+          this.$toast.clear();
+        });
+    },
+    getCourseInfo(id) {
+      let _this = this;
+      let p = _this.$user();
+      p.liveCurriculaCourseId = id;
+      _this.$request.post("/app/live/courseInfo", p).then(res => {
+        _this.info = res.data;
+        // 上个页面传入的数据
+        _this.getParImg(_this.info.liveCurriculaId).then(result => {
+          let parInfo = (this.parInfo = result.data.records[0]);
+          _this.info.imgSrc =
+            parInfo.imagePrefix +
+            parInfo.liveCurriculaCover +
+            "?r=" +
+            Math.random();
+          // 拿到数据之后  进行分享
+          _this.share(
+            parInfo.liveCurriculaTitle,
+            _this.info.imgSrc,
+            parInfo.liveCurriculaTypeName
+          );
+          _this.$store.commit("getUserProfilePicture");
+          _this.getImgToBase64(_this.info.imgSrc, uri => {
+            _this.info.imgSrc = uri;
+            _this.toImage();
+          });
+        });
       });
     },
-    getCourseInfo(){
+    async getParImg(id) {
       let p = this.$user();
-      p.liveCurriculaId = 3;
-        this.$request.post("/app/live/liveList", p).then(res=>{
-          console.log(res)
-          this.info = res.data.records[0];
-          console.log(this.$store.state.profilePicture);
-        });
+      p.liveCurriculaId = id;
+      return await this.$request.post("/app/live/liveList", p);
+    },
+    getImgToBase64(url, callback) {
+      var canvas = document.createElement("canvas");
+      var ctx = canvas.getContext("2d");
+      var img = new Image(); //通过构造函数来创建的 img 实例，在赋予 src 值后就会立刻下载图片，相比 createElement() 创建 <img> 省去了 append()，也就避免了文档冗余和污染
+      img.crossOrigin = "Anonymous";
+      //要先确保图片完整获取到，这是个异步事件
+      img.onload = function() {
+        canvas.height = img.height; //确保canvas的尺寸和图片一样
+        canvas.width = img.width;
+        ctx.drawImage(img, 0, 0); //将图片绘制到canvas中
+        var dataURL = canvas.toDataURL("image/png"); //转换图片为dataURL,传第二个参数可压缩图片,前提是图片格式jpeg或者webp格式的
+        callback(dataURL); //调用回调函数
+        canvas = null;
+      };
+      img.src = url;
     }
   }
 };
@@ -212,10 +256,8 @@ export default {
 <style scoped lang="scss">
 #canvas {
   width: 660px;
-  height: 950px;
   img {
     width: 100%;
-    height: 100%;
   }
 }
 .share {
@@ -279,7 +321,7 @@ export default {
   text-align: center;
   img {
     height: 100%;
-    transform: translate(-14px, 0px);
+    // transform: translate(-14px, 0px);
     // width: 100%;
     // height: 100%;
   }

@@ -124,10 +124,10 @@ export default {
     display: inline-block;
     width: 24px;
     height: 25px;
-    vertical-align: middle;
+    // vertical-align: middle;
     background: url("../assets/images/playing.png") no-repeat;
     background-size: 100%;
-    margin-right: 5px;
+    margin-right: 8px;
   }
 }
 // 讲师

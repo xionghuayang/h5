@@ -41,8 +41,8 @@ axios.interceptors.response.use(res => {
             Toast(res.data.message)
             localStorage.removeItem("loginMsg");
             setTimeout(() => {
-                location.href = '#/login';
-                // location.href = 'https://www.baizezaixian.com/H5/#/pages/login/login'
+                // location.href = '#/login';
+                location.href = 'https://www.baizezaixian.com/H5/#/pages/login/login'
             }, 1000);
         }
         return res.data

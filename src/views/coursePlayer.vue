@@ -114,7 +114,7 @@
     <div v-show="showPopup">
       <van-popup v-model="showPopup" :round="correct" class="pop_box">
         <div class="pop_content">
-          <van-field v-model="psd" clearable placeholder="请输入直播室密码" class="input" />
+          <van-field v-model="psd" clearable placeholder="请输入直播室密码" class="input" type="password" />
           <p class="sign_text">请点击课程中的“咨询”按钮联系客服获取密码</p>
           <div class="pop_btn flex_default">
             <div @click="showPopup=!showPopup">取消</div>
@@ -178,7 +178,7 @@ export default {
   },
   async created() {
     // 清空课程路径
-    localStorage.removeItem("coursePath");
+    localStorage.removeItem("shareUrl");
     // 获取链接数据
     let { id } = this.$route.query;
     // 根据一级id获取数据 courseObj
@@ -233,13 +233,14 @@ export default {
       }
     },
     // 进入直播间
-    joinStudio(id) {
+    async joinStudio(id) {
       /**
        * @param:{ name1 } { String } @description
        * @param:{ name2 } { String } @description
        * @return any... { String }
        * @description 进入直播间
        */
+      let res = await this.$public.loginByToken();
       this.liveId = id;
       if (this.isPublic) {
         // 公共课，输入密码前往直播间观看
@@ -273,7 +274,13 @@ export default {
     goLive(id) {
       // console.log(id);
       // 公开课，需要密码 ，密码错误
-      if (this.isPublic && this.newPwd && this.psd.trim() != this.newPwd) {
+      // if (this.isPublic && this.newPwd && this.psd.trim() != this.newPwd) {
+      //   this.showPopup = !this.showPopup;
+      //   this.psd = "";
+      //   return this.$toast("密码输入错误");
+      // }
+      // 需要密码 ，密码错误
+      if (this.newPwd && this.psd.trim() != this.newPwd) {
         this.showPopup = !this.showPopup;
         this.psd = "";
         return this.$toast("密码输入错误");
@@ -283,7 +290,7 @@ export default {
         path: "/playing",
         query: {
           oneId: id,
-          liveCurriculaCourseId: this.liveId
+          threeId: this.liveId
           // imgSrc: this.courseObj.imgSrc
         }
       });
@@ -333,10 +340,13 @@ export default {
     },
     // 加入我的课程
     async joinInCourse(id, rid) {
-      console.log(id, rid);
+      // 验证登录
+      let res = await this.$public.loginByToken();
+      if (res.code !== 200) return;
+      // console.log(id, rid);
       // 已购买的付费课
       if (!this.isPublic && this.isPay == 1) {
-        this.$toast("该课程为付费课");
+        this.$toast("您已购买该课程");
         return;
       }
       // 公开课已加入学习
@@ -395,12 +405,11 @@ export default {
       this.showAdvisory = !this.showAdvisory;
     },
     // 前往订单支付
-    goBuy() {
+    async goBuy() {
       let user = this.$user();
       let { id, title, imgSrc, price, orginPrice } = this.courseObj;
       if (user.token) {
         // 用户已登录,前往支付
-
         this.$router.push({
           path: "/courseorder",
           query: { id, title, imgSrc, price, orginPrice }
@@ -408,8 +417,9 @@ export default {
       } else {
         // 前往登录
         let link = location.href;
-        localStorage.setItem("coursePath", link);
-        this.$router.push("/login");
+        localStorage.setItem("shareUrl", link);
+        // 验证登录
+        let res = await this.$public.loginByToken();
       }
     },
     // 立即支付
@@ -433,7 +443,7 @@ export default {
     async rePlay(data, item) {
       // console.log(data, item);
       // 判断公开课 true 前往回放 false 提示购买
-      if (!this.isPublic && this.isPay == 1)
+      if (!this.isPublic && this.isPay == 0)
         return this.$toast("请先购买该课程！");
 
       // console.log(data);
@@ -456,6 +466,7 @@ export default {
         query: {
           oneTitle: liveCurriculaTitle,
           twoTitle: liveCurriculaCatalogueTitle,
+          oneId: this.courseObj.id,
           twoId: liveCurriculaCatalogueId,
           threeId: liveCurriculaCourseId
         }
@@ -515,24 +526,25 @@ export default {
 }
 .directory_courses {
   height: 191px;
-  // border-bottom: 1px solid #f1f1f1;
-  padding: 51px 0 0 0px;
+  border-bottom: 1px solid #f1f1f1;
+  padding: 46px 0 0 54px;
+  box-sizing: border-box;
   .lesson_title {
     font-size: 28px;
     color: #525252;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
     img {
       height: 26px;
       width: 26px;
       vertical-align: middle;
-      margin-right: 8px;
+      margin: 0 10px 8px 18px;
     }
   }
   .lesson {
-    margin-bottom: 13px;
+    // margin-bottom: 13px;
     color: #bbbbbb;
     font-size: 22px;
-    margin-left: 16px;
+    // margin-left: 16px;
   }
 }
 .pop_box {
@@ -546,6 +558,8 @@ export default {
   .input {
     width: 515px;
     height: 78px;
+    line-height: 78px;
+    padding-left: 38px;
     background: rgba(247, 247, 251, 1);
     border-radius: 20px;
     margin: 0 auto;
@@ -643,13 +657,24 @@ export default {
   overflow: hidden;
 }
 .van-cell {
+  padding: 0;
+}
+.van-cell__title {
   height: 1.973333rem;
-  padding: 0 1.066667rem;
+  // padding: 0 1.066667rem;
   line-height: 1.973333rem;
+  background-color: #f9f9f9;
+  padding-left: 1.44rem;
+  box-sizing: border-box;
 }
 .van-collapse-item__content {
   padding: 0;
-  padding-left: 1.333333rem;
+}
+.van-cell__right-icon {
+  height: 1.973333rem;
+  width: 1.973333rem;
+  background-color: #f9f9f9;
+  margin-left: 0;
 }
 .van-cell__left-icon,
 .van-cell__right-icon {

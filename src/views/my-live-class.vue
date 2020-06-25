@@ -6,7 +6,7 @@
           <card :order="item" :border="true" :key="item.id"></card>
         </template>
       </van-tab>
-      <van-tab title="直播中">
+      <van-tab title="未完结">
         <template v-for="item in inList">
           <card :order="item" :border="true" :key="item.id"></card>
         </template>
@@ -29,9 +29,9 @@ export default {
     card
   },
   async created() {
+    let res = await this.$public.loginByToken();
+
     this.getAllList();
-    this.getOverList();
-    this.getInList();
   },
   data() {
     return {
@@ -45,6 +45,15 @@ export default {
     // tab Click
     clc(index, title) {
       console.log(index, title);
+      if (index == 0) {
+        this.getAllList();
+      }
+      if (index == 1) {
+        this.getInList();
+      }
+      if (index == 2) {
+        this.getOverList();
+      }
     },
     // 获取全部课程
     async getAllList() {
@@ -56,11 +65,20 @@ export default {
         if (item.isPrice) {
           item.isShowPrice = false;
         }
+        // 直播中
+        if (item.status == 1) {
+          console.log(item);
+          item.isShowPrice = true;
+          item.priceInfo = "直播中";
+        }
         return item;
       });
       this.allList = newArr;
     },
     // 直播中（未完结）
+    // getInList() {
+    //   this.inList = this.allList.filter(item => item.status === 1);
+    // },
     async getInList() {
       let p = this.$user();
       p.status = "0";

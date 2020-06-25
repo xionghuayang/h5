@@ -30,7 +30,7 @@
             </div>
             <div class="re_play_directory_content">
               <template v-for="item in courseList">
-                <div :key="item.creaTime">
+                <div :key="item.creaTime" class="content_item">
                   <p class="re_lesson_title">{{item.liveTitle}}</p>
                   <p class="re_lesson_time">主讲老师：{{item.teacherNames}}│{{item.creaTime}}</p>
                   <van-steps
@@ -58,6 +58,8 @@
 <script>
 import player from "@/components/player.vue";
 import playerNavbar from "@/components/player-navbar.vue";
+import Share from "../assets/js/share.js";
+import shareUrl from "../utils/shareUrl.js";
 export default {
   name: "rePlay",
   components: {
@@ -78,17 +80,63 @@ export default {
         fileId: "",
         appID: "",
         videoTit: ""
-      }
+      },
+      // 分享数据
+      link: ""
     };
   },
-  created() {
-    // console.log(this.$route.query);
-    // console.log(this.$store.state.reloadPage);
+  async created() {
+    // 分享链接进入
+    let uId = await shareUrl(this);
+    this.isHaveCourse();
+    // console.log(uId, "000000");
+    // let { oneId, threeId } = this.$route.query;
+    this.link = `${location.href}&rowid=${uId}`;
+    // console.log(location.href);
     this.prePage = this.$route.query;
     this.getData();
   },
   mounted() {},
   methods: {
+    // console.log(this.$route.query, "------");
+    // 判断用户是否拥有该课程
+    async isHaveCourse() {
+      let p = this.$user();
+      p.liveCurriculaId = this.$route.query.oneId;
+      let res = await this.$request.post("/app/live/liveList", p);
+      // console.log(res);
+      if (res.code !== 200) return this.$toast("数据获取失败");
+      let data = res.data.records[0];
+      // console.log(data);
+      // 付费课没有拥有，前往上个页面
+      if (data.liveCurriculaPresentPrice !== 0 && !data.isLiveCurriculaUser) {
+        this.$router.push({
+          path: "/coursePlayer",
+          id: this.$route.query.oneId
+        });
+        return;
+      }
+    },
+    // 分享数据
+    share() {
+      // 获取页面数据
+      let {
+        imagePrefix,
+        liveCurriculaCover,
+        liveTitle,
+        teacherNames
+      } = this.courseList[0];
+      let _obj = {
+        title: this.prePage.oneTitle,
+        imgScr: imagePrefix + liveCurriculaCover,
+        desc: liveTitle + " " + teacherNames,
+        link: this.link
+      };
+      console.log(_obj);
+      let wxShare = new Share();
+      wxShare.init(_obj);
+    },
+    // 切换课程
     changeLesson(index, id) {
       // console.log(index, id);
       let arr = this.courseList.filter(
@@ -142,13 +190,15 @@ export default {
       let curArr = courseData.filter(
         item => item.liveCurriculaCourseId + "" === this.prePage.threeId + ""
       );
-      console.log(curArr);
+      // console.log(curArr);
       // 获取当前视频所需数据
       let { appID, fileId } = curArr[0].innerCourse[0];
       let videoTit = `${curArr[0].liveTitle}(1)`;
       this.player = { appID, fileId, videoTit };
-      console.log(this.player);
+      // console.log(this.player);
       this.isShowPlayer = true;
+      // 初始化分享
+      this.share();
     }
   }
 };
@@ -180,11 +230,16 @@ export default {
 }
 .re_play_directory_content {
   width: 100%;
-  padding: 50px 0 54px 54px;
+  // padding: 0px 0 0px 54px;
   box-sizing: border-box;
-  border-bottom: 1px solid #f1f1f1;
+  // border-bottom: 1px solid #f1f1f1;
+  .content_item {
+    padding: 50px 0 40px 54px;
+    box-sizing: border-box;
+    border-bottom: 1px solid #f1f1f1;
+  }
   .re_lesson_title {
-    margin-left: -13px;
+    // margin-left: -13px;
     font-size: 28px;
     color: #525252;
   }

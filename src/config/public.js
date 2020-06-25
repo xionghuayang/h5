@@ -10,7 +10,7 @@ import $request from "@/config/request.js";// 导入我们的api接口
  */
 
 const _getUserMsg = () => {
-    return localStorage.getItem("loginMsg") ? JSON.parse(localStorage.getItem("loginMsg")) : ''
+    return localStorage.getItem("loginMsg") ? JSON.parse(localStorage.getItem("loginMsg")).data : ''
 }
 /**
  * @return bzClientInfo|| $user  { Object }
@@ -18,7 +18,7 @@ const _getUserMsg = () => {
  */
 
 const getToken = () => {
-    let loginMsg = JSON.parse(localStorage.getItem("loginMsg"))
+    let loginMsg = JSON.parse(localStorage.getItem("loginMsg")).data;
     let bzClientInfo = {};
     if (loginMsg) {
         bzClientInfo.token = loginMsg.token;//用户的token

@@ -9,6 +9,12 @@
 var _self = this;
 export default {
   // pagename:直播播放器
+  props: {
+    videoObj: {
+      type: Object,
+      default: {}
+    }
+  },
   data() {
     return {
       url: "",
@@ -19,11 +25,10 @@ export default {
   mounted() {
     // 初始化盒子宽高
     _self = this;
-    let Obj = this.$route.query;
-    let url = `http://${Obj.liveBDomain}/${Obj.liveAppName}/${Obj.liveStreamName}`;
+    let url = `https://${this.videoObj.liveBDomain}/${this.videoObj.liveAppName}/${this.videoObj.liveStreamName}`;
     console.log(url);
     this.url = url;
-    this.initPalyer('http://baizezaixian.com/liveCurriculaId_5/i5txWdSP.m3u8');
+    this.initPalyer(url);
   },
   // 页面销毁
   destroyed() {
@@ -49,6 +54,18 @@ export default {
         },
         clarityLabel: { od: "蓝光", hd: "高清", sd: "标清" },
         listener: function(msg) {
+          try {
+            let el = document.querySelector("#bz_player_video video");
+            let btn_ = document.querySelector(
+              "#bz_player_video .vcp-playtoggle"
+            );
+            if (el && btn_) {
+              if (el.paused) {
+                btn_.click();
+              }
+            }
+          } catch (error) {}
+
           // if (!log) {
           //   return;
           // }
@@ -59,6 +76,12 @@ export default {
             // console.log("load", msg);
             // 暂停？？暂停个毛线啊 这特么是直播！
             // document.querySelector(".vcp-playtoggle").remove();
+
+            let elVideo = document.querySelector("#bz_player_video video");
+            elVideo.setAttribute("playsinline", "");
+            elVideo.setAttribute("webkit-playsinline", "");
+            elVideo.setAttribute("x5-playsinline", "");
+            _self.$emit("initPageStyle");
           }
           if (msg.type == "error") {
             console.log("报错了");
@@ -93,9 +116,9 @@ export default {
 </script>
 
 <style rel="stylesheet/scss" lang="scss" scoped>
-.video_box{
-    height: 372px;
-    width: 100%;
+.video_box {
+  height: 372px;
+  width: 100%;
 }
 .video_box /deep/ .vcp-player {
   display: flex;

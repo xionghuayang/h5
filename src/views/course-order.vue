@@ -1,7 +1,11 @@
 <template>
   <div>
     <card :order="orderCard"></card>
-    <van-cell title="优惠券" :value="discountsVal" :border="false" class="discounts" />
+    <!-- <van-cell title="优惠券" :value="discountsVal" :border="false" class="discounts" /> -->
+    <div class="discounts">
+      <p>优惠券</p>
+      <p>{{discountsVal}}</p>
+    </div>
     <van-submit-bar button-text="立即支付" @submit="onSubmit">
       <template #default>
         <p class="price">
@@ -71,10 +75,22 @@ export default {
 </script>
 <style scoped lang="scss">
 /* 优惠券 */
+// .discounts {
+//   margin-top: 0.8rem;
+//   font-size: 28px;
+//   color: #525252;
+//   background-color: #fff;
+// }
 .discounts {
-  margin-top: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  // margin-top: 0.8rem;
   font-size: 28px;
   color: #525252;
+  padding: 30px 40px;
+}
+.van-cell {
+  background-color: #fff;
 }
 .van-cell__value {
   font-size: 0.746667rem;

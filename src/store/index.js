@@ -35,11 +35,15 @@ const mutations = {
     state.reloadPage = data;
   },
   loginSuccess(state, data) {
-    localStorage.setItem("loginMsg", JSON.stringify(data));
+    let _obj = {};
+    // 嵌套一层对象  是为了和uni项目的localStorage数据格式保持一致
+    _obj.data = data;
+    _obj.type = "object";
+    localStorage.setItem("loginMsg", JSON.stringify(_obj));
     state.$userInfo = data
   },
   getUserProfilePicture() {
-    let data = localStorage.getItem("loginMsg") ? JSON.parse(localStorage.getItem("loginMsg")) : ''
+    let data = localStorage.getItem("loginMsg") ? JSON.parse(localStorage.getItem("loginMsg")).data : ''
     state.profilePicture = data.imagePrefix + data.avatar;
     state.nickname = data.nickname;
   },

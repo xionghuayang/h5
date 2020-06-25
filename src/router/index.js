@@ -30,17 +30,6 @@ const routes = [
     }
   },
   {
-    path: '/publicCourse',
-    name: 'publicCourse',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/publicCourse.vue'),
-    meta: {
-      title: '公开课详情'
-    }
-  },
-  {
     path: '/rePlay',
     name: 'rePlay',
     component: () => import('../views/rePlay.vue'),
@@ -121,6 +110,17 @@ const routes = [
     component: () => import(/* webpackChunkName: "about" */ '../views/orderList.vue'),
     meta: {
       title: '订单列表'
+    }
+  },
+  {
+    path: '/orderdetails',
+    name: 'orderdetails',
+    // route level code-splitting
+    // this generates a separate chunk (about.[hash].js) for this route
+    // which is lazy-loaded when the route is visited.
+    component: () => import(/* webpackChunkName: "about" */ '../views/orderdetails.vue'),
+    meta: {
+      title: '订单详情'
     }
   }
 

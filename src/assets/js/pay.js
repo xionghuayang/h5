@@ -55,8 +55,7 @@ class Pay {
         });
     }
     getOpenid() {
-        // let openid = localStorage.getItem("openid");
-        let openid = "oU4nn1a - zt6af2J6BCUnl7xYaXUw";
+        let openid = localStorage.getItem("openid");
         if (openid) return openid
         else {
             Toast.fail('获取支付参数失败，请重新登录！');

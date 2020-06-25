@@ -2,7 +2,7 @@
   <div>
     <div v-if="window_" class="playPhone">
       <div class="voide_part">
-        <live-broadcast></live-broadcast>
+        <live-broadcast :videoObj="videoObj" v-if="showVideo" @initPageStyle="initPageStyle"></live-broadcast>
         <player-navbar :peopleNum="999"></player-navbar>
       </div>
 
@@ -21,7 +21,7 @@
             :key="index"
           >
             <div class="content chat_room" v-if="index==0">
-              <chat-room :boxH="boxH"></chat-room>
+              <chat-room :boxH="boxH" :videoObj="videoObj" v-if="showVideo"></chat-room>
             </div>
             <div
               class="content advisory_teacher"
@@ -34,14 +34,24 @@
             </div>
             <div class="content" :style="{height:(boxH + 15) + 'px'}" v-show="index==2">
               <div
-                @click="schoolFn(i)"
-                :class="[school_active==i?'school_active':'']"
-                class="school"
-                v-for="(item1,i) in tabschool"
-                :key="i"
-              >{{item1}}</div>
-              <div class="school_abstract" v-html="teacher_school.details" v-if="school_active==0"></div>
-              <div class="school_fx" v-html="teacher.orgDetails" v-else></div>
+                v-if="records.isSwitch2==1"
+                :class="[school_active==0?'school_active':'']"
+                @click="schoolActive(0)"
+                class="school_"
+              >{{tabschool[0]}}</div>
+              <div
+                v-if="records.isSwitch3==1"
+                :class="[school_active==1?'school_active':'']"
+                @click="schoolActive(1)"
+                class="school_"
+              >{{tabschool[1]}}</div>
+
+              <div class="school" v-if="school_active==1">
+                <div class="school_fx" v-html="teacher.orgDetails"></div>
+              </div>
+              <div class="school" v-else>
+                <div class="school_abstract" v-html="teacher_school.details"></div>
+              </div>
             </div>
             <div class="content" :style="{height:(boxH + 15) + 'px'}" v-show="index==3">
               <div class="proclamation">
@@ -49,21 +59,22 @@
                   <img src="@/assets/images/agTop1.png" alt srcset />邀请榜TOP20
                 </div>
               </div>
-              <div class="top_list_for" v-for="(item, index) in topThreeImg" :key="index">
+              <div class="top_list_for" v-for="(item, index) in invitation" :key="index">
                 <div class="top_list_header">
-                  <img src="@/assets/images/invite.png" alt srcset />
+                  <!-- item.AVATAR -->
+                  <img :src="$store.state.imagePrefix+item.AVATAR" alt srcset />
                 </div>
                 <div class="top_list_info">
                   <p>
-                    八一画室│萨达姆
+                    {{item.NAME}}
                     <img
-                      :src="index == 0?topThreeImg[0].src:index==1?topThreeImg[1].src:index==2?topThreeImg[2].src:''"
+                      :src="topThreeImg[0].src"
                       v-if="index == 0 || index == 1 || index == 2"
                       alt
                       srcset
                     />
                   </p>
-                  <p>邀请832位好友参与直播</p>
+                  <p>邀请{{item.receiveCount}}位好友参与直播</p>
                 </div>
               </div>
             </div>
@@ -71,12 +82,18 @@
         </van-tabs>
       </div>
       <div class="double_img">
-        <round-double></round-double>
+        <round-double
+          :shareUrl="shareUrl"
+          :teacherQrCode="teacher.details"
+          :orgName="teacher_school.name"
+          :orgId="String(teacher_school.userId)"
+          :oneId="String($route.query.oneId)"
+        ></round-double>
       </div>
     </div>
-    <div class="playing" v-else>
+    <div v-else class="playing">
       <div class="voide_part">
-        <live-broadcast></live-broadcast>
+        <live-broadcast :videoObj="videoObj" v-if="showVideo" @initPageStyle="initPageStyle"></live-broadcast>
         <player-navbar :peopleNum="999"></player-navbar>
       </div>
 
@@ -95,7 +112,7 @@
             :key="index"
           >
             <div class="content chat_room" v-if="index==0">
-              <chat-room :boxH="boxH"></chat-room>
+              <chat-room :boxH="boxH" :videoObj="videoObj" v-if="showVideo"></chat-room>
             </div>
             <div
               class="content advisory_teacher"
@@ -106,38 +123,49 @@
               <!-- <img :src="teacher.avatar" alt=""> -->
               <p class="qr_code" v-html="teacher.details"></p>
             </div>
-            <div class="content school_" :style="{height:(boxH + 15) + 'px'}" v-show="index==2">
+            <div class="content" :style="{height:(boxH + 15) + 'px'}" v-show="index==2">
               <div
-                @click="schoolFn(i)"
-                :class="[school_active==i?'school_active':'']"
-                class="school"
-                v-for="(item1,i) in tabschool"
-                :key="i"
-              >{{item1}}</div>
-              <div class="school_abstract" v-html="teacher_school.details" v-if="school_active==0"></div>
-              <div class="school_fx" v-html="teacher.orgDetails" v-else></div>
+                v-if="records.isSwitch2==1"
+                :class="[school_active==0?'school_active':'']"
+                @click="schoolActive(0)"
+                class="school_"
+              >{{tabschool[0]}}</div>
+              <div
+                v-if="records.isSwitch3==1"
+                :class="[school_active==1?'school_active':'']"
+                @click="schoolActive(1)"
+                class="school_"
+              >{{tabschool[1]}}</div>
+
+              <div class="school" v-if="school_active==1">
+                <div class="school_fx" v-html="teacher.orgDetails"></div>
+              </div>
+              <div class="school" v-else>
+                <div class="school_abstract" v-html="teacher_school.details"></div>
+              </div>
             </div>
-            <div class="content agTop" :style="{height:(boxH + 15) + 'px'}" v-show="index==3">
+            <div class="content" :style="{height:(boxH + 15) + 'px'}" v-show="index==3">
               <div class="proclamation">
                 <div class="agTop1">
                   <img src="@/assets/images/agTop1.png" alt srcset />邀请榜TOP20
                 </div>
               </div>
-              <div class="top_list_for" v-for="(item, index) in topThreeImg" :key="index">
+              <div class="top_list_for" v-for="(item, index) in invitation" :key="index">
                 <div class="top_list_header">
-                  <img src="@/assets/images/invite.png" alt srcset />
+                  <!-- item.AVATAR -->
+                  <img :src="$store.state.imagePrefix+item.AVATAR" alt srcset />
                 </div>
                 <div class="top_list_info">
                   <p>
-                    八一画室│萨达姆
+                    {{item.NAME}}
                     <img
-                      :src="index == 0?topThreeImg[0].src:index==1?topThreeImg[1].src:index==2?topThreeImg[2].src:''"
+                      :src="topThreeImg[0].src"
                       v-if="index == 0 || index == 1 || index == 2"
                       alt
                       srcset
                     />
                   </p>
-                  <p>邀请832位好友参与直播</p>
+                  <p>邀请{{item.receiveCount}}位好友参与直播</p>
                 </div>
               </div>
             </div>
@@ -145,7 +173,13 @@
         </van-tabs>
       </div>
       <div class="double_img">
-        <round-double></round-double>
+        <round-double
+          :shareUrl="shareUrl"
+          :teacherQrCode="teacher.details"
+          :orgName="teacher_school.name"
+          :orgId="String(teacher_school.userId)"
+          :oneId="String($route.query.oneId)"
+        ></round-double>
       </div>
     </div>
   </div>
@@ -155,6 +189,8 @@ import liveBroadcast from "@/components/live-broadcast.vue";
 import playerNavbar from "@/components/player-navbar.vue";
 import chatRoom from "@/components/chat-room.vue";
 import roundDouble from "@/components/round-double.vue";
+import shareUrlJs from "../utils/shareUrl.js";
+import Share from "../assets/js/share.js";
 export default {
   name: "playing",
   components: {
@@ -170,10 +206,12 @@ export default {
       active: 0,
       tabs: ["讨论区", "咨询老师", "校区介绍", "邀请榜"],
       boxH: 0,
-      tabschool: ["校区介绍", "分校简介"],
+      tabschool: ["总校介绍", "分校简介"],
       school_active: 0,
       teacher: {},
       invitation: {},
+      videoObj: {},
+      showVideo: false,
       teacher_school: {},
       topThreeImg: [
         {
@@ -186,14 +224,40 @@ export default {
           src: require("@/assets/images/sign_03.png")
         }
       ],
-      window_: true
+      window_: true,
+      shareUrl: "",
+      records: ""
     };
   },
-  created() {},
+  async created() {
+    this.$toast.loading({
+      message: "正在初始化直播间...",
+      forbidClick: true,
+      loadingType: "spinner",
+      duration: 0
+    });
+    // console.log(location.href);
+    // let res = await this.$public.loginByToken();
+    // console.log(res);
+    // let user = this.$user();
+    // if (!user.token) {
+    //   // 用户未登录
+    //   this.$router.push({
+    //     path: "/login"
+    //   });
+    //   return;
+    // }
+    let uId = await shareUrlJs(this);
+    let shareUrl = location.href + "&rowid=" + uId;
+    this.shareUrl = shareUrl;
+    this.getDataByOneId();
+    // console.log(this.shareUrl, ">>>>>>>>>>>>>");
+  },
   mounted() {
     this.initPageStyle();
     this.consulting();
     this.windowFn();
+    this.showplay();
     window.onresize = () => {
       return (() => {
         this.windowFn();
@@ -201,8 +265,53 @@ export default {
     };
   },
   methods: {
+    // 判断用户是否拥有该课程
+    isHaveCourse() {
+      // 付费课没有拥有，前往上个页面
+      let data = this.oneData;
+      if (data.liveCurriculaPresentPrice !== 0 && !data.isLiveCurriculaUser) {
+        this.$router.push({
+          path: "/coursePlayer",
+          id: this.$route.query.oneId
+        });
+        return;
+      }
+    },
+    // 获取一级id数据
+    async getDataByOneId() {
+      let { oneId } = this.$route.query;
+      let p = { liveCurriculaId: oneId };
+      // console.log(p)
+      let res = await this.$request.post("/app/live/liveList", p);
+      console.log(res);
+      if (res.code !== 200) return this.$toast("数据获取失败");
+      this.oneData = res.data.records[0];
+      this.share();
+      this.isHaveCourse();
+    },
+    // 拼接share参数
+    share() {
+      let {
+        liveCurriculaTitle,
+        imagePrefix,
+        liveCurriculaCover,
+        liveCurriculaTypeName,
+        liveCurriculaTeacher
+      } = this.oneData;
+      let _obj = {
+        title: liveCurriculaTitle,
+        imgScr: imagePrefix + liveCurriculaCover,
+        desc: liveCurriculaTypeName + " " + liveCurriculaTeacher,
+        link: this.shareUrl
+      };
+      // console.log(_obj);
+      let wxShare = new Share();
+      wxShare.init(_obj);
+    },
     windowFn() {
-      if (/Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent)) {
+      if (
+        /Android|webOS|iPhone|iPod|iPad|BlackBerry/i.test(navigator.userAgent)
+      ) {
         //移动端
         this.window_ = true;
       } else {
@@ -213,6 +322,31 @@ export default {
         console.log(document.getElementsByTagName("html")[0].style);
         console.log(window.location.href, ">>>>>>");
       }
+    },
+    showplay() {
+      let { oneId } = this.$route.query;
+      let p = { liveCurriculaId: oneId };
+      this.$request.post("/app/live/liveList", p).then(res => {
+        if (res.code == 200) {
+          this.records = res.data.records[0];
+          let arrtabs = document.querySelectorAll(".van-tab");
+          if (this.records.isSwitch1 == 0) {
+            arrtabs[1].style.display = "none";
+          }
+          if (this.records.isSwitch2 == 0 && this.records.isSwitch3 == 0) {
+            arrtabs[2].style.display = "none";
+          }
+          if (this.records.isSwitch2 == 0) {
+            this.schoolActive(1);
+          }
+          if (this.records.isSwitch5 == 0) {
+            arrtabs[3].style.display = "none";
+          }
+        }
+      });
+    },
+    schoolActive(i) {
+      this.school_active = i;
     },
     initPageStyle() {
       setTimeout(() => {
@@ -226,7 +360,9 @@ export default {
       }, 0);
     },
     consulting() {
-      let p = this.$route.query;
+      // let p = this.$route.query;
+      let { threeId } = this.$route.query;
+      let p = { liveCurriculaCourseId: threeId };
       // console.log(p)
       this.$request.post("/app/live/courseInfo", p).then(res => {
         if (res.code == 200) {
@@ -234,6 +370,14 @@ export default {
           let q = {};
           this.invitation = res.data;
           this.invitationFn();
+          this.videoObj = {
+            liveBDomain: res.data.liveBDomain,
+            liveAppName: res.data.liveAppName,
+            liveStreamName: res.data.liveStreamName
+          };
+
+          this.showVideo = !this.showVideo;
+          this.$toast.clear();
           q.userId = res.data.createUser;
           p.userId = res.data.liveTeacher;
           // console.log(this.invitation)
@@ -246,22 +390,21 @@ export default {
           this.$request.post("/app/home/getUserInfoAll", q).then(res => {
             if (res.code == 200) {
               this.teacher_school = res.data.organization;
-              // console.log(res)
             }
           });
         }
       });
     },
-    schoolFn(i) {
-      this.school_active = i;
-    },
     invitationFn() {
-      let p = this.$route.query;
-      p.liveCurriculaId = this.invitation.liveCurriculaId;
-      console.log(p);
+      let p = this.$user();
+      p.liveCurriculaId = this.$route.query.oneId;
+      p.liveCurriculaCourseId = this.$route.query.threeId;
       this.$request.post("/app/live/live_share_rank", p).then(res => {
         if (res.code == 200) {
           this.invitation = res.data;
+          if (this.invitation.length >= 20) {
+            this.invitation.length = 20;
+          }
           console.log(this.invitation);
         }
       });
@@ -283,6 +426,9 @@ export default {
   }
   .playing_tabs {
     padding-top: 11.893333rem;
+    .van-tabs__content {
+      height: calc(100vh - (11.8933 * 18.75px + 44px));
+    }
   }
 }
 .playing {
@@ -346,9 +492,19 @@ export default {
   }
 
   .school_ {
-    > div {
+    font-size: 0.24rem;
+    height: 0.8rem;
+    line-height: 0.8rem;
+  }
+  .school {
+    font-size: 0.24rem;
+    padding: 0 0.24rem;
+    p {
       font-size: 0.24rem;
     }
+  }
+  .school_abstract {
+    font-size: 0.24rem;
   }
   .agTop {
     .proclamation {
@@ -423,15 +579,48 @@ export default {
       }
     }
   }
+  .content {
+    .proclamation {
+      padding: 0.25rem 0;
+      .agTop1 {
+        font-size: 0.24rem;
+        img {
+          width: 0.3rem;
+          height: 0.4rem;
+          margin: 0 5px 0 0;
+        }
+      }
+    }
+    .top_list_for {
+      padding: 0.4rem 0 0.4rem 0.6rem;
+      img {
+        width: 0.6rem;
+        height: 0.6rem;
+      }
+      p {
+        font-size: 0.24rem;
+        img {
+          width: 0.3rem;
+          height: 0.3rem;
+        }
+      }
+    }
+  }
+
   .double {
     height: 2.4rem;
     width: 1rem;
     position: absolute;
-    top: 75%;
+    top: 70%;
     right: 0.5rem;
     img {
       height: 1rem;
     }
+  }
+}
+.chat_room {
+  .van-cell {
+    padding: 10px 16px !important;
   }
 }
 .content {
@@ -486,14 +675,18 @@ export default {
   }
 }
 
-.school {
+.school_ {
+  background-color: #fff;
   display: inline-block;
+  width: 50%;
+  text-align: center;
+  height: 2rem;
+  line-height: 2rem;
   font-size: 0.75rem;
-  padding: 10px 20px;
 }
 
 .school_active {
-  background-color: #fff;
+  font-weight: 700;
 }
 
 .school_abstract {

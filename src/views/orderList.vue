@@ -3,23 +3,27 @@
     <van-tabs v-model="active" @click="handleTabClick">
       <van-tab title="全部订单">
         <template v-for="item in allOrderList">
-          <order-card :key="item.orderIndex" :order="item"></order-card>
+          <order-card :key="item.liveCurriculaPayId" :order="item" @reloadOrderList="orderlist"></order-card>
         </template>
         <!-- <order-card :order="orderObj"></order-card> -->
       </van-tab>
       <van-tab title="待支付">
         <template v-for="item in pendingPayList">
-          <order-card :key="item.orderIndex" :order="item"></order-card>
+          <order-card :key="item.liveCurriculaPayId" :order="item"></order-card>
         </template>
       </van-tab>
       <van-tab title="交易成功">
         <template v-for="item in passPayList">
-          <order-card :key="item.orderIndex" :order="item"></order-card>
+          <order-card :key="item.liveCurriculaPayId" :order="item"></order-card>
         </template>
       </van-tab>
       <van-tab title="交易关闭">
         <template v-for="item in canclePayList">
-          <order-card :key="item.orderIndex" :order="item"></order-card>
+          <order-card
+            :key="item.liveCurriculaPayId"
+            :order="item"
+            @reloadOrderList="orderCancleList"
+          ></order-card>
         </template>
       </van-tab>
     </van-tabs>
@@ -31,12 +35,12 @@
 </template>
 <script>
 import orderCard from "../components/order-card";
-let map = {
-  0: ["allOrderList", ""],
-  1: ["pendingPayList", "error"],
-  2: ["passPayList", "true"],
-  3: ["canclePayList", "false"]
-};
+// let map = {
+//   0: ["allOrderList", ""],
+//   1: ["pendingPayList", "2"],
+//   2: ["passPayList", "3"],
+//   3: ["canclePayList", "4"]
+// };
 export default {
   name: "orderList",
   components: {
@@ -46,65 +50,114 @@ export default {
     return {
       active: 0,
       isShowEmpty: false,
-      allOrderList: [
-        {
-          orderTime: "2020-10-10 19:20:20",
-          orderIndex: "189496566464891",
-          imgSrc: require("../assets/images/ordervip.png"),
-          price: "100",
-          orderPay: true,
-          orderPass: "true"
-        },
-        {
-          orderTime: "2020-10-10 19:20:20",
-          orderIndex: "189496566464892",
-          imgSrc: require("../assets/images/ordervip.png"),
-          price: "100",
-          orderPay: true,
-          orderPass: "true"
-        },
-        {
-          orderTime: "2020-10-10 19:20:20",
-          orderIndex: "189496566464893",
-          imgSrc: require("../assets/images/ordervip.png"),
-          price: "100",
-          orderPay: false,
-          orderPass: "error"
-        },
-        {
-          orderTime: "2020-10-10 19:20:20",
-          orderIndex: "189496566464894",
-          imgSrc: require("../assets/images/ordervip.png"),
-          price: "100",
-          orderPay: false,
-          orderPass: "error"
-        }
-      ],
+      allOrderList: [],
       pendingPayList: [],
       passPayList: [],
       canclePayList: []
     };
   },
+  async created() {
+    // 验证登录
+    let res = await this.$public.loginByToken();
+  },
   mounted() {
-    this.isShowEmpty = this.allOrderList.length === 0 ? true : false;
+    this.orderlist();
   },
 
   methods: {
     handleTabClick(index, title) {
       // console.log(index, title);
+      // this.isShowEmpty = false;
+      // if (this.allOrderList.length === 0) {
+      //   this.isShowEmpty = true;
+      //   return;
+      // }
       this.isShowEmpty = false;
-      if (this.allOrderList.length === 0) {
+      if (index === 0) {
+        // 全部订单
+        this.orderlist();
+      }
+      if (index === 1) {
+        // 待支付
+        this.orderInlist();
+      }
+      if (index === 2) {
+        // 交易成功
+        this.orderSuccessList();
+      }
+      if (index === 3) {
+        // 交易取消
+        this.orderCancleList();
+      }
+    },
+    // 订单查询
+    async getOrderList(status = " ") {
+      let p = this.$user();
+      p.status = status; // " " 全部 ，2 待支付 ，  3 交易完成 4 交易取消
+      let res = await this.$request.post("/app/live/myLivePayList", p);
+      if (res.code !== 200) return this.$toast("订单信息获取失败！");
+      // console.log(res);
+      let arr = res.data.records.map(item => {
+        let {
+          creaTime,
+          endTime,
+          imagePrefix,
+          liveCurriculaCover,
+          liveCurriculaId,
+          liveCurriculaParameters,
+          liveCurriculaPayId,
+          liveCurriculaTitle,
+          money,
+          status
+        } = item;
+        return {
+          liveCurriculaParameters,
+          liveCurriculaTitle,
+          creaTime,
+          endTime,
+          liveCurriculaPayId,
+          liveCurriculaTitle,
+          imgSrc: imagePrefix + liveCurriculaCover,
+          money,
+          status
+        };
+      });
+      // console.log(arr);
+      return arr;
+    },
+    // 全部订单
+    async orderlist() {
+      let res = await this.getOrderList();
+      // console.log(res);
+      if (res.length === 0) {
         this.isShowEmpty = true;
-        return;
       }
-      if (index !== 0) {
-        let arr = map[index][0];
-        let flag = map[index][1];
-        this[arr] = this.allOrderList.filter(item => item.orderPass === flag);
-        this.isShowEmpty = this[arr].length === 0 ? true : false;
+      this.allOrderList = res;
+    },
+    // 待支付
+    async orderInlist() {
+      let res = await this.getOrderList("2");
+      if (res.length === 0) {
+        this.isShowEmpty = true;
       }
-
-      // console.log(this[arr]);
+      // console.log(res);
+      this.pendingPayList = res;
+    },
+    // 交易成功
+    async orderSuccessList() {
+      let res = await this.getOrderList("3");
+      if (res.length === 0) {
+        this.isShowEmpty = true;
+      }
+      this.passPayList = res;
+    },
+    // 交易取消
+    async orderCancleList() {
+      let res = await this.getOrderList("4");
+      if (res.length === 0) {
+        this.isShowEmpty = true;
+      }
+      this.canclePayList = res;
     }
   }
 };
@@ -115,6 +168,9 @@ export default {
   /deep/ .van-tabs__line {
     width: 4.8rem !important;
     background-color: rgb(254, 208, 57);
+  }
+  .van-tab__pane {
+    padding: 0;
   }
 }
 .empty {

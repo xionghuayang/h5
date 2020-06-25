@@ -26,7 +26,12 @@ export default {
     }
   },
 
-  deactivated() {
+  // deactivated() {
+  //   console.log("销毁");
+  //   // 销毁
+  //   this.player.dispose();
+  // },
+  beforeDestroy() {
     console.log("销毁");
     // 销毁
     this.player.dispose();
@@ -67,7 +72,15 @@ export default {
         fileID: fileId, // 请传入需要播放的视频 filID（必须）
         appID: appID, // 请传入点播账号的 appID（必须）
         playbackRates: [0.5, 1, 1.25, 1.5, 2], // 设置变速播放倍率选项，仅 HTML5 播放模式有效
-        posterImage: "" //封面
+        posterImage: "", //封面
+        plugins: {
+          ContinuePlay: {
+            // 开启续播功能
+            // auto: true, //[可选] 是否在视频播放后自动续播
+            text: "上次播放至 " //[可选] 提示文案
+            // btnText: '恢复播放' //[可选] 按钮文案
+          }
+        }
       });
       this.player.on("ready", res => {
         // 做一些处理

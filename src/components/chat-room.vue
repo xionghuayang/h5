@@ -1,71 +1,19 @@
 <template>
   <div>
-    <!-- <div class="web_chatroom" >
-      <div class="web_chatroom_box first_web_chatroom_box">
-        <div class="web_chatroom_allMessage">
-          <div
-            class="web_chatroom_allMessage_list"
-            v-for="(item, index) in socketAllMsgList"
-            :key="index"
-          >
-            <div class="message_box">
-              <div class="message_box_header_img">
-                <img :src="item.profilePicture" alt srcset />
-              </div>
-            </div>
-            <div class="message_box_content forciblyBr">
-              <div class="message_box_name forciblyBr">
-                <span class="message_box_name_y">{{item.sender + ' : '}}</span>
-                <span class="message_box_content_text">{{item.content.trim()}}</span>
-              </div>
-              <p class="message_box_time">{{item.createTime}}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="web_chatroom_box" id="sendMsgBox" @click="fοcus = true">
-        <div class="web_chatroom_box_textarea">
-          <textarea
-            id="chatroom_input"
-            :fοcus="fοcus"
-            v-model="socketMsg"
-            @keydown.enter="sendMessage"
-            placeholder="请输入内容..."
-          ></textarea>
-        </div>
-        <div class="chatroom_send_message"  @click="sendMessage">
-          <span>发送</span>
-        </div>
-      </div>
-    </div>-->
-
     <div class="web_room">
       <div class="web_room_allMsg" :style="{height:boxH + 'px'}">
         <div class="for_list" v-for="(item,index) in socketAllMsgList" :key="index">
           <p class="time">{{item.createTime}}</p>
           <div class="web_room_allMsg_list">
             <div class="user_avatar">
-              <img src="@/assets/images/img0.png" alt srcset />
+              <img :src="item.profilePicture" alt srcset />
             </div>
             <div class="user_msg">
-              <p class="user_name">杜临风</p>
+              <p class="user_name">{{item.sender}}</p>
               <div class="user_news">{{item.content}}</div>
             </div>
           </div>
         </div>
-        <!--  -->
-        <!-- <div class="for_list">
-          <p class="time">18:24</p>
-          <div class="web_room_allMsg_list">
-            <div class="user_avatar">
-              <img src="@/assets/images/img0.png" alt srcset />
-            </div>
-            <div class="user_msg">
-              <p class="user_name">杜临风</p>
-              <div class="user_news">郑姐，晚上吃啥郑姐，晚上吃啥，郑姐，晚上吃 啥啥啥啥啥啥啥啥啥</div>
-            </div>
-          </div>
-        </div>-->
       </div>
       <!--  -->
     </div>
@@ -86,6 +34,10 @@ export default {
     boxH: {
       type: Number,
       default: 0
+    },
+    videoObj: {
+      type: Object,
+      default: {}
     }
   },
   data() {
@@ -100,7 +52,7 @@ export default {
     /**
      * @description 房间号码给vuex 用于定时发送心跳消息
      */
-    this.$store.commit("heartbeat", this.$route.query.liveStreamName);
+    this.$store.commit("heartbeat", this.videoObj.liveStreamName);
     /**
           @description 初始化当前用户数据
     */
@@ -110,7 +62,7 @@ export default {
      * @description 建立socket房间通讯
      */
 
-    this.joinSocket(this.$route.query.liveStreamName);
+    this.joinSocket(this.videoObj.liveStreamName);
     // user_1/linfeng/154
     // 监听消息接收
     this.$options.sockets.onmessage = res => {
@@ -173,8 +125,7 @@ export default {
     joinSocket(roomID) {
       let p = this.$user();
       this.$connect(
-        // `${this.$store.state.bzSocketURL}/${roomID}/${this.$store.state.nickname}/${p.rowid}`
-        `${this.$store.state.bzSocketURL}/15813/linfeng/154`
+        `${this.$store.state.bzSocketURL}/${roomID}/${this.$store.state.nickname}/${p.rowid}`
       );
     },
     /**
@@ -196,11 +147,10 @@ export default {
       if (!type) type = 4;
       let sendData = {
         createTime: this.$public.getCurentTime(), //当前发送时间
-        // profilePicture: this.$store.state.profilePicture, //发送人头像
+        profilePicture: this.$store.state.profilePicture, //发送人头像
         content: this.socketMsg, //消息内容
-        // roomName: this.$route.query.liveStreamName,
-        roomName: "15813",
-        // sender: this.$store.state.nickname, //发送人
+        roomName: this.videoObj.liveStreamName,
+        sender: this.$store.state.nickname, //发送人
         to: to, //定向发送的接受人姓名 所有人则为空
         toId: toId, //定向发送的接受人userid所有人则为空
         type: type, //消息类型详见上方监听接受的注释
