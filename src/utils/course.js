@@ -26,6 +26,7 @@ export default async function formatCourse(url, data = {}) {
       liveCurriculaUserId, // 删除课程id （我的）
       liveCurriculaDetails, // 课程详情
       status, // 课程状态 1 直播中 0 已结束
+      liveCurriculaCourseStatus // 大于0，表示直播中
     } = item;
     return {
       id: liveCurriculaId,
@@ -46,7 +47,10 @@ export default async function formatCourse(url, data = {}) {
         time: formatDate(creaTime)
       },
       courseInfo: liveCurriculaDetails,
-      status
+      status,
+      liveStatus: liveCurriculaCourseStatus,
+      pages: res.data.pages,
+      total: res.data.total
     };
   });
   return allList;

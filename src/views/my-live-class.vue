@@ -5,6 +5,7 @@
         <template v-for="item in allList">
           <card :order="item" :border="true" :key="item.id"></card>
         </template>
+        <div class="inToast" v-show="allList.length === 0">您还没有加入的课程</div>
       </van-tab>
       <van-tab title="未完结">
         <template v-for="item in inList">
@@ -16,6 +17,7 @@
         <template v-for="item in overList">
           <card :order="item" :border="true" :key="item.id"></card>
         </template>
+        <div class="inToast" v-show="overList.length === 0">没有已结束的课程</div>
       </van-tab>
     </van-tabs>
   </div>
@@ -66,8 +68,9 @@ export default {
           item.isShowPrice = false;
         }
         // 直播中
-        if (item.status == 1) {
+        if (item.status > 0) {
           console.log(item);
+          item.isPrice = false;
           item.isShowPrice = true;
           item.priceInfo = "直播中";
         }

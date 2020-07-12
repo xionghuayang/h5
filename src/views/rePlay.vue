@@ -1,9 +1,12 @@
 <template>
-  <div>
+  <div class="replayBox">
     <player :play="player" v-if="isShowPlayer"></player>
+    <div class="playerbox" v-else>
+      <van-loading color="#fff" vertical>加载中...</van-loading>
+    </div>
     <!-- <player :play="player"></player> -->
     <div class="player_navbar">
-      <player-navbar :status="'2'" :peopleNum="2"></player-navbar>
+      <player-navbar :status="'2'" :peopleNum="replayNum" :titleClass="titleClass"></player-navbar>
     </div>
     <div class="tab_box">
       <van-tabs
@@ -29,22 +32,46 @@
               </p>
             </div>
             <div class="re_play_directory_content">
-              <template v-for="item in courseList">
-                <div :key="item.creaTime" class="content_item">
+              <template v-for="(item,index) in courseList">
+                <div :key="index" v-if="item.innerCourse.length === 0"></div>
+                <div :key="item.creaTime" class="content_item" v-else>
                   <p class="re_lesson_title">{{item.liveTitle}}</p>
                   <p class="re_lesson_time">主讲老师：{{item.teacherNames}}│{{item.creaTime}}</p>
-                  <van-steps
+                  <!-- <van-steps
                     direction="vertical"
                     :active="item.curActive"
                     active-color="#fed039"
-                    @click-step="changeLesson($event,item.liveCurriculaCourseId)"
-                  >
-                    <blockquote>
-                      <van-step v-for="(item1,index) in item.innerCourse" :key="index">
+                  @click-step="changeLesson($event,item.liveCurriculaCourseId)"
+                  >-->
+                  <!-- <div v-if="item.innerCourse.length === 0">
+                    <p style="font-size: .586667rem; color: #525252;">暂无回放课程</p>
+                  </div>-->
+                  <!-- <div v-else-if="item.innerCourse.length === 1"></div> -->
+
+                  <!-- <van-step v-for="(item1,index) in item.innerCourse" :key="index">
                         <h3>{{item.liveTitle}}（{{index + 1}}）</h3>
-                      </van-step>
-                    </blockquote>
-                  </van-steps>
+                  </van-step>-->
+                  <div v-if="item.innerCourse.length === 1">
+                    <player-title
+                      @click.native="clc(0,item.innerCourse[0],item.liveTitle,true)"
+                      :ref="'step' + item.innerCourse[0].liveCurriculaRecordId + 'player'"
+                      class="playerTitleclc"
+                    ></player-title>
+                  </div>
+                  <blockquote v-else>
+                    <template v-for="(item1,index1) in item.innerCourse">
+                      <div class="box" :key="index1">
+                        <step
+                          @click.native="clc(index1,item1,item.liveTitle)"
+                          :ref="'step' + item1.liveCurriculaRecordId"
+                        >
+                          <p>{{item.liveTitle + '(' + (index1 - 0 +1) + ')'}}</p>
+                        </step>
+                        <div class="steps_line" v-show="item.innerCourse.length-1 !== index1"></div>
+                      </div>
+                    </template>
+                  </blockquote>
+                  <!-- </van-steps> -->
                 </div>
               </template>
             </div>
@@ -56,6 +83,8 @@
 </template>
 
 <script>
+import playerTitle from "../components/playerTitle";
+import step from "../components/steps.vue";
 import player from "@/components/player.vue";
 import playerNavbar from "@/components/player-navbar.vue";
 import Share from "../assets/js/share.js";
@@ -64,10 +93,15 @@ export default {
   name: "rePlay",
   components: {
     player,
-    playerNavbar
+    playerNavbar,
+    step,
+    playerTitle
   },
   data() {
     return {
+      currentList: [],
+      titleClass: "",
+      replayNum: 0,
       isShowPlayer: false,
       active: 0,
       correct: true,
@@ -94,7 +128,9 @@ export default {
     this.link = `${location.href}&rowid=${uId}`;
     // console.log(location.href);
     this.prePage = this.$route.query;
+    // this.getTwoData();
     this.getData();
+    this.getJIGOU();
   },
   mounted() {},
   methods: {
@@ -109,7 +145,10 @@ export default {
       let data = res.data.records[0];
       // console.log(data);
       // 付费课没有拥有，前往上个页面
-      if (data.liveCurriculaPresentPrice !== 0 && !data.isLiveCurriculaUser) {
+      if (
+        data.liveCurriculaPresentPrice !== 0 &&
+        data.isLiveCurriculaUser.toString() == "false"
+      ) {
         this.$router.push({
           path: "/coursePlayer",
           id: this.$route.query.oneId
@@ -136,8 +175,9 @@ export default {
       let wxShare = new Share();
       wxShare.init(_obj);
     },
+
     // 切换课程
-    changeLesson(index, id) {
+    async changeLesson(index, id) {
       // console.log(index, id);
       let arr = this.courseList.filter(
         item => item.liveCurriculaCourseId === id
@@ -145,10 +185,27 @@ export default {
       this.courseList.forEach(item => (item.curActive = -1));
       arr[0].curActive = index;
       // 获取当前视频所需数据
-      let { appID, fileId } = arr[0].innerCourse[index];
+      let { appID, fileId, liveCurriculaViews } = arr[0].innerCourse[index];
       let videoTit = `${arr[0].liveTitle}(${index + 1})`;
       this.player = { appID, fileId, videoTit };
+      this.replayNum = liveCurriculaViews;
       // console.log(appID, fileId, videoTit);
+    },
+    // 获取机构名称
+    async getJIGOU() {
+      let { oneId } = this.prePage;
+      let p = this.$user();
+      p.liveCurriculaId = oneId;
+      let res = await this.$request.post("/app/live/liveList", p);
+      if (res.code !== 200) return this.$toast("数据获取失败");
+      // console.log(res, "-----185");
+      let q = {};
+      q.userId = res.data.records[0].createUser;
+      this.$request.post("/app/home/getUserInfoAll", q).then(res => {
+        if (res.code == 200) {
+          this.titleClass = res.data.nickname;
+        }
+      });
     },
     // 获取三四级目录数据
     async getData() {
@@ -157,21 +214,22 @@ export default {
       p.liveCurriculaCatalogueId = twoId;
       let res = await this.$request.post("/app/live/courseList", p);
       if (res.code !== 200) return this.$toast("数据获取失败");
-      // console.log(res, "-----");
+      console.log(res, "-----202");
+
       // 只保留回放数据
       let replayArr = res.data.filter(item => item.liveStatus === 2);
       // console.log(replayArr);
-      replayArr.forEach((item, index) => {
-        // console.log(item, index);
-        item.curActive = -1;
-        if (item.liveCurriculaCourseId + "" === this.prePage.threeId + "") {
-          item.curActive = 0;
-        }
-        // if (item.liveCurriculaCourseId + "" === this.prePage.threeId) {
-        //   console.log(123);
-        //   item.curActive = 0;
-        // }
-      });
+      // replayArr.forEach((item, index) => {
+      // console.log(item, index, "----191");
+      // item.curActive = -1;
+      // if (item.liveCurriculaCourseId + "" === this.prePage.threeId + "") {
+      //   item.curActive = 0;
+      // }
+      // if (item.liveCurriculaCourseId + "" === this.prePage.threeId) {
+      //   console.log(123);
+      //   item.curActive = 0;
+      // }
+      // });
 
       // let arr = res.data;
       let courseData = await Promise.all(
@@ -186,19 +244,105 @@ export default {
         })
       );
       this.courseList = courseData;
+      // 首次进入加载课程
+      let curr = this.courseList.filter(
+        item => item.liveCurriculaCourseId + "" === this.prePage.threeId + ""
+      );
+
+      if (curr[0].innerCourse.length === 1) {
+        let clcitem = curr[0].innerCourse[0];
+        this.$nextTick(() => {
+          this.clc(0, clcitem, curr[0].liveTitle, true);
+        });
+      } else {
+        let clcitem = curr[0].innerCourse[0];
+        this.$nextTick(() => {
+          this.clc(0, clcitem, curr[0].liveTitle);
+        });
+      }
+
+      console.log(curr, "---219");
       // console.log(courseData);
+
       let curArr = courseData.filter(
         item => item.liveCurriculaCourseId + "" === this.prePage.threeId + ""
       );
       // console.log(curArr);
       // 获取当前视频所需数据
-      let { appID, fileId } = curArr[0].innerCourse[0];
+      let { appID, fileId, liveCurriculaViews } = curArr[0].innerCourse[0];
       let videoTit = `${curArr[0].liveTitle}(1)`;
       this.player = { appID, fileId, videoTit };
       // console.log(this.player);
       this.isShowPlayer = true;
+      this.replayNum = liveCurriculaViews;
       // 初始化分享
       this.share();
+    },
+    // 更新版切换课程
+    clc(index1, item1, title, titclc) {
+      console.log(index1, item1, title, titclc);
+      let current = "";
+      if (titclc) {
+        current = "step" + item1.liveCurriculaRecordId + "player";
+      } else {
+        current = "step" + item1.liveCurriculaRecordId;
+      }
+      if (this.currentList.length >= 2) {
+        this.currentList.shift();
+        this.currentList.push(current);
+      } else {
+        this.currentList.push(current);
+      }
+      console.log(this.currentList);
+      if (this.currentList.length === 1) {
+        if (this.currentList[0].endsWith("player")) {
+          let dom = this.$refs[this.currentList[0]][0].$el;
+          let title = dom.parentNode.previousSibling.previousSibling;
+          let info = dom.parentNode.previousSibling;
+          title.style.color = "#FFD322";
+          // info.style.color = "#FFD322";
+        } else {
+          let dom = this.$refs[this.currentList[0]][0].$el;
+          let content = dom.querySelector(".content");
+          let dot = dom.querySelector(".dot");
+          content.style.color = "#FFD322";
+          dot.style.backgroundColor = "#FFD322";
+        }
+      } else {
+        if (this.currentList[0].endsWith("player")) {
+          let dom = this.$refs[this.currentList[0]][0].$el;
+          let title = dom.parentNode.previousSibling.previousSibling;
+          let info = dom.parentNode.previousSibling;
+          title.style.color = "#525252";
+          // info.style.color = "#bbb";
+        } else {
+          let dom = this.$refs[this.currentList[0]][0].$el;
+          let content = dom.querySelector(".content");
+          let dot = dom.querySelector(".dot");
+          content.style.color = "#525252";
+          dot.style.backgroundColor = "#bbb";
+        }
+        if (this.currentList[1].endsWith("player")) {
+          let dom = this.$refs[this.currentList[1]][0].$el;
+          let title = dom.parentNode.previousSibling.previousSibling;
+          let info = dom.parentNode.previousSibling;
+          title.style.color = "#FFD322";
+          // info.style.color = "#FFD322";
+        } else {
+          let dom1 = this.$refs[this.currentList[1]][0].$el;
+          let content1 = dom1.querySelector(".content");
+          let dot1 = dom1.querySelector(".dot");
+          content1.style.color = "#FFD322";
+          dot1.style.backgroundColor = "#FFD322";
+        }
+      }
+
+      // 获取当前视频所需数据
+      let { appID, fileId, liveCurriculaViews } = item1;
+      let videoTit = `${title}(${index1 + 1})`;
+      this.player = { appID, fileId, videoTit };
+      this.replayNum = liveCurriculaViews;
+      // console.log(index);
     }
   }
 };
@@ -206,6 +350,38 @@ export default {
 
 <style lang="scss" scoped>
 @import "@/assets/css/global.scss";
+.playerTitleclc {
+  position: absolute;
+  top: 0;
+  left: 20px;
+  width: 100%;
+  height: 300px;
+}
+.replayBox {
+  height: 100vh;
+  background-color: #f9f9f9;
+}
+.box {
+  position: relative;
+}
+.steps_line {
+  /* width: 5px; */
+  position: absolute;
+  top: 18px;
+  left: 6px;
+  height: 36px;
+  border-left: 1px dashed #bbb;
+}
+
+.playerbox {
+  height: 487px;
+  background-color: #000;
+  .van-loading {
+    top: 50%;
+    transform: translateY(-50%);
+    text-align: center;
+  }
+}
 .re_play_directory_title {
   background: #f9f9f9;
   padding: 29px 56px 29px 0;
@@ -234,9 +410,11 @@ export default {
   box-sizing: border-box;
   // border-bottom: 1px solid #f1f1f1;
   .content_item {
-    padding: 50px 0 40px 54px;
+    padding: 50px 0 24px 54px;
     box-sizing: border-box;
     border-bottom: 1px solid #f1f1f1;
+    background-color: #fff;
+    position: relative;
   }
   .re_lesson_title {
     // margin-left: -13px;
@@ -251,19 +429,52 @@ export default {
   /deep/ .van-step__icon--active {
     background: #fed039;
     border-radius: 50%;
-    height: 10px;
-    width: 10px;
+    height: 0.32rem;
+    width: 0.32rem;
     // -webkit-tap-highlight-color: transparent;
-    font-family: sans-serif;
+    // font-family: sans-serif;
+    // top: 1px;
   }
   /deep/ .van-icon-checked::before {
     content: " ";
   }
   /deep/ .van-step__circle {
     border-radius: 50%;
-    font-size: 16px;
-    height: 10px;
-    width: 10px;
+    // font-size: 16px;
+    height: 0.32rem;
+    width: 0.32rem;
+  }
+}
+
+// 样式
+.tab_box {
+  /deep/ .van-tab {
+    justify-content: left;
+    padding-left: 1.066667rem;
+  }
+  /deep/ .van-tabs__line {
+    transform: translateX(0.96rem) !important;
+  }
+  /deep/ .van-steps--vertical {
+    // padding: 0 0 0 1.066667rem;
+    padding: 0;
+  }
+  [class*="van-hairline"]::after {
+    border: 0;
+  }
+  /deep/ .van-step--vertical .van-step__circle-container {
+    top: 0.906667rem;
+  }
+  /deep/ .van-step--vertical {
+    padding: 0.373333rem 0.533333rem 0.373333rem 0;
+    line-height: 0.64rem;
+  }
+  /deep/ .van-step__title {
+    font-size: 0.586667rem;
+    margin-left: -0.266667rem;
+  }
+  /deep/ .van-tab__pane-wrapper {
+    background: #f9f9f9;
   }
 }
 </style>

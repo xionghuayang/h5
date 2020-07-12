@@ -17,13 +17,71 @@ export default {
   data() {
     return {
       classList: [],
-      isLoading: false
+      isLoading: false,
+      currentPage: 1,
+      pages: 1,
+      total: 0,
+      isShow: true
     };
   },
   created() {
     this.getAllLiveList();
+    this.getLiveListData();
+  },
+  mounted() {
+    setTimeout(() => {
+      window.addEventListener("scroll", this.onScroll);
+    }, 50);
+  },
+  beforeDestroy() {
+    window.removeEventListener("scroll", this.onScroll);
   },
   methods: {
+    // 页面滚动事件
+    onScroll() {
+      console.log("滚动了");
+      // console.log(e);
+      var wScrollY = window.scrollY; // 当前滚动条位置
+      var wInnerH = window.innerHeight; // 设备窗口的高度（不会变）
+      var bScrollH = document.body.scrollHeight; // 滚动条总高度
+      // console.log(wScrollY, wInnerH, bScrollH);
+      if (bScrollH - (wScrollY + wInnerH) <= 50) {
+        // console.log("触底了");
+        // 触底加载下页数据
+        // this.page++;
+        this.currentPage++;
+        if (this.currentPage > this.pages) {
+          this.currentPage = this.pages;
+          if (this.isShow) {
+            this.$toast("到底啦 没有更多课程了");
+            this.isShow = false;
+          }
+          // console.log(this.isShow);
+          return;
+        }
+        this.$toast.loading({
+          message: "数据加载中...",
+          forbidClick: true,
+          loadingType: "spinner",
+          duration: 0
+        });
+        this.getAllLiveList();
+      } else {
+        // console.log("未触底");
+        this.$toast.clear();
+        this.isShow = true;
+      }
+    },
+    // 获取下一页数据
+    getLiveListData() {
+      let p = {};
+      p.liveStatus = "0";
+      this.$request.post("/app/live/liveList", p).then(res => {
+        // console.log(res, "---");
+        this.pages = res.data.pages;
+        this.total = res.data.total;
+      });
+    },
     // 获取全部数据
     async getAllLiveList() {
       // let p = {
@@ -72,13 +130,19 @@ export default {
       // };
       let p = this.$user();
       p.liveStatus = "0";
+      p.page = this.currentPage;
       let allLiveList = await getCourse("/app/live/liveList", p);
-      console.log(allLiveList);
+      if (this.currentPage > 1) {
+        this.classList.push(...allLiveList);
+        allLiveList = this.classList;
+      }
+      console.log(allLiveList, "-------");
 
       this.classList = allLiveList.map(item => {
         item.info.time = null;
         return item;
       });
+      this.$toast.clear();
     }
   }
 };

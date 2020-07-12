@@ -53,7 +53,10 @@ export default {
       allOrderList: [],
       pendingPayList: [],
       passPayList: [],
-      canclePayList: []
+      canclePayList: [],
+      pages: 1,
+      currentPage: 1,
+      isShow: true
     };
   },
   async created() {
@@ -62,9 +65,71 @@ export default {
   },
   mounted() {
     this.orderlist();
+    setTimeout(() => {
+      window.addEventListener("scroll", this.onScroll);
+    }, 50);
+  },
+  beforeDestroy() {
+    window.removeEventListener("scroll", this.onScroll);
   },
 
   methods: {
+    // 页面滚动事件
+    onScroll() {
+      console.log("滚动了");
+      // console.log(e);
+      var wScrollY = window.scrollY; // 当前滚动条位置
+      var wInnerH = window.innerHeight; // 设备窗口的高度（不会变）
+      var bScrollH = document.body.scrollHeight; // 滚动条总高度
+      // console.log(wScrollY, wInnerH, bScrollH);
+      if (bScrollH - (wScrollY + wInnerH) <= 50) {
+        // console.log("触底了");
+        // 触底加载下页数据
+        // this.page++;
+        this.currentPage++;
+        if (this.currentPage > this.pages) {
+          this.currentPage = this.pages;
+          if (this.isShow) {
+            this.$toast("到底啦 没有更多订单了");
+            this.isShow = false;
+          }
+          // console.log(this.isShow);
+          return;
+        }
+        this.$toast.loading({
+          message: "数据加载中...",
+          forbidClick: true,
+          loadingType: "spinner",
+          duration: 0
+        });
+        if (this.active == 0) {
+          this.getOrderList().then(res => {
+            this.$toast.clear();
+            this.allOrderList.push(...res);
+          });
+        } else if (this.active == 1) {
+          this.getOrderList("2").then(res => {
+            this.$toast.clear();
+            this.pendingPayList.push(...res);
+          });
+        } else if (this.active == 2) {
+          this.getOrderList("3").then(res => {
+            this.$toast.clear();
+            this.passPayList.push(...res);
+          });
+        } else {
+          this.getOrderList("4").then(res => {
+            this.$toast.clear();
+            this.canclePayList.push(...res);
+          });
+        }
+      } else {
+        // console.log("未触底");
+        this.$toast.clear();
+        this.isShow = true;
+      }
+    },
+    // tab栏点击
     handleTabClick(index, title) {
       // console.log(index, title);
       // this.isShowEmpty = false;
@@ -72,6 +137,7 @@ export default {
       //   this.isShowEmpty = true;
       //   return;
       // }
+      this.currentPage = 1;
       this.isShowEmpty = false;
       if (index === 0) {
         // 全部订单
@@ -94,9 +160,12 @@ export default {
     async getOrderList(status = " ") {
       let p = this.$user();
       p.status = status; // " " 全部 ，2 待支付 ，  3 交易完成 4 交易取消
+      p.page = this.currentPage;
       let res = await this.$request.post("/app/live/myLivePayList", p);
       if (res.code !== 200) return this.$toast("订单信息获取失败！");
       // console.log(res);
+      this.pages = res.data.pages;
+
       let arr = res.data.records.map(item => {
         let {
           creaTime,
@@ -111,6 +180,7 @@ export default {
           status
         } = item;
         return {
+          liveCurriculaId,
           liveCurriculaParameters,
           liveCurriculaTitle,
           creaTime,
@@ -132,6 +202,7 @@ export default {
       if (res.length === 0) {
         this.isShowEmpty = true;
       }
+
       this.allOrderList = res;
     },
     // 待支付

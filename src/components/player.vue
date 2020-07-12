@@ -94,6 +94,7 @@ export default {
 
 <style rel="stylesheet/scss" lang="scss" scoped>
 #bz_video {
-  height: 372px !important;
+  // height: 372px !important;
+  height: 487px !important;
 }
 </style>

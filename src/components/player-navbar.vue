@@ -9,7 +9,7 @@
           <span class="study_num">{{peopleNum}} 人次</span>
         </div>
         <div class="player_navbar_r flex_default">
-          <img src="@/assets/images/beisu.png" alt srcset />倍数
+          {{titleClass}}
         </div>
       </div>
     </div>
@@ -23,7 +23,8 @@
           <span class="study_num">{{peopleNum}} 人已学习</span>
         </div>
         <div class="player_navbar_r flex_default">
-          <img src="@/assets/images/beisu.png" alt srcset />倍数
+          {{titleClass}}
+          <!-- <img src="@/assets/images/beisu.png" alt srcset />倍数 -->
         </div>
       </div>
     </div>
@@ -47,7 +48,14 @@ export default {
     peopleNum: {
       type: Number,
       default: 0
+    },
+    titleClass: {
+      type: String,
+      default: ""
     }
+  },
+  mounted() {
+  	console.log(this.$props)
   }
 };
 </script>

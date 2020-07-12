@@ -18,7 +18,9 @@ export default {
   data() {
     return {
       url: "",
-      player: {} //TcPlayer实例
+      player: {}, //TcPlayer实例
+      startime: "", //开始时间
+      newtimer: "" //播放时间
     };
   },
 
@@ -26,8 +28,12 @@ export default {
     // 初始化盒子宽高
     _self = this;
     let url = `https://${this.videoObj.liveBDomain}/${this.videoObj.liveAppName}/${this.videoObj.liveStreamName}`;
-    console.log(url);
+    // console.log(url);
     this.url = url;
+    // _self.starTimer();
+    // setInterval(function() {
+    //   _self.timer();
+    // }, 1000);
     this.initPalyer(url);
   },
   // 页面销毁
@@ -38,6 +44,37 @@ export default {
     this.player = "";
   },
   methods: {
+    starTimer() {
+      let p = this.$user();
+      // console.log(this.$route.query.threeId)
+      p.liveCurriculaCourseId = this.$route.query.threeId;
+      this.$request.post("/app/live/getLiveTime", p).then(res => {
+        // console.log(res)
+        if (res.code == 200) {
+          this.startime = res.data.liveStartTime;
+          // console.log(this.startime)
+        }
+      });
+    },
+    timer() {
+      // console.log(this.startime)
+      let timer = new Date().getTime() - new Date(this.startime).getTime();
+      // let timer=new Date().getTime() - new Date('2020/07/01 16:00:00').getTime()
+      // console.log(timer)
+      let hours = Math.floor(timer / (60 * 60 * 1000));
+      let minutes = Math.floor((timer % (60 * 60 * 1000)) / (60 * 1000));
+      if (minutes < 10) {
+        minutes = "0" + minutes;
+      }
+      let seconds = Math.floor(
+        ((timer % (60 * 60 * 1000)) % (60 * 1000)) / 1000
+      );
+      if (seconds < 10) {
+        seconds = "0" + seconds;
+      }
+      this.newtimer = hours + ":" + minutes + ":" + seconds;
+      // console.log(this.newtimer)
+    },
     initPalyer(url) {
       // 执行
       let _self = this;
@@ -59,6 +96,14 @@ export default {
             let btn_ = document.querySelector(
               "#bz_player_video .vcp-playtoggle"
             );
+            let spantime = document.querySelector(
+              "#bz_player_video .vcp-timelabel"
+            );
+            // _self.starTimer();
+            // setInterval(function() {
+            //   _self.timer();
+            // }, 1000);
+            // spantime.innerHTML = _self.newtimer;
             if (el && btn_) {
               if (el.paused) {
                 btn_.click();
@@ -117,7 +162,8 @@ export default {
 
 <style rel="stylesheet/scss" lang="scss" scoped>
 .video_box {
-  height: 372px;
+  // height: 372px;
+  height: 487px;
   width: 100%;
 }
 .video_box /deep/ .vcp-player {

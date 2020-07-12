@@ -27,35 +27,43 @@ export default {
       type: String,
       default: ""
     },
-    orgId:{
+    orgId: {
       type: String,
       default: ""
     },
-    oneId:{
+    oneId: {
+      type: String,
+      default: ""
+    },
+    threeId: {
+      type: String,
+      default: ""
+    },
+    uId: {
       type: String,
       default: ""
     }
   },
   data() {
     return {
-		records:''
-	};
+      records: ""
+    };
   },
   created() {},
-  mounted(){
-	  this.showplay()
+  mounted() {
+    this.showplay();
   },
   methods: {
-	  showplay(){
-	  	let { oneId } = this.$route.query;
-	  	let p = { liveCurriculaId: oneId };
-	  	this.$request.post("/app/live/liveList", p).then(res=>{
-	  		console.log(res)
-	  		if(res.code==200){
-	  			this.records=res.data.records[0]
-	  		}
-	  	});
-	  },
+    showplay() {
+      let { oneId } = this.$route.query;
+      let p = { liveCurriculaId: oneId };
+      this.$request.post("/app/live/liveList", p).then(res => {
+        console.log(res);
+        if (res.code == 200) {
+          this.records = res.data.records[0];
+        }
+      });
+    },
     invite() {
       //   邀请有礼
       this.$router.push({
@@ -63,7 +71,10 @@ export default {
         query: {
           shareUrl: this.shareUrl,
           teacherQrCode: this.teacherQrCode,
-          orgName: this.orgName
+          orgName: this.orgName,
+          oneId: this.oneId,
+          threeId: this.threeId,
+          uId: this.uId
         }
       });
     },
@@ -71,10 +82,10 @@ export default {
       //   预约报名
       this.$router.push({
         path: "/yuyueinfo",
-        query:{
+        query: {
           orgId: this.orgId,
           orgName: this.orgName,
-          oneId:this.oneId
+          oneId: this.oneId
         }
       });
     }
@@ -85,7 +96,7 @@ export default {
 <style scoped lang="scss">
 .double {
   position: fixed;
-  top: 70%;
+  bottom: 15%;
   right: 53px;
   img {
     height: 104px;

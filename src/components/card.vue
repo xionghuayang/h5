@@ -23,20 +23,22 @@
           <p class="price" v-if="order.isPrice">
             ￥{{order.price}}
             <span class="orgin-price">￥{{order.orginPrice}}</span>
+            <span v-if="order.liveStatus > 0" class="price" style="margin-left: 5px;">直播中</span>
           </p>
           <p class="price" v-else>
             <span class="img" v-show="order.priceInfo !== '公开课'"></span>
             <span>{{order.priceInfo}}</span>
+            <span v-if="order.liveStatus > 0" class="price" style="margin-left: 5px;">直播中</span>
           </p>
         </div>
       </template>
       <template #tags>
-        <p class="info van-multi-ellipsis--l2" v-if="order.info">
-          主讲老师:{{order.info.tName}}︱共{{order.info.allNum}}节︱有{{order.info.num}}回放
-          <span
-            v-if="order.info.time"
-          >直播时间{{order.info.time}}</span>
-        </p>
+        <div v-if="order.info">
+          <p
+            class="info van-ellipsis"
+          >主讲老师:{{order.info.tName}}︱共{{order.info.allNum}}节︱有{{order.info.num}}回放</p>
+          <div class="info van-ellipsis" v-show="order.info.time">直播时间{{order.info.time}}</div>
+        </div>
       </template>
     </van-card>
   </div>
@@ -52,10 +54,10 @@ export default {
   methods: {
     // 点击前往页面
     handleClick(order) {
-      console.log(order);
+      // console.log(order, "/////");
       let { id, state } = order;
       // state = 1 订单页面
-      if (state === 1) return;
+      // if (state === 1) return;
       this.$router.push({
         path: "/coursePlayer",
         query: {
@@ -95,22 +97,28 @@ export default {
   color: #000;
   padding: 0;
   background-color: #fff;
+  .van-card__title {
+    max-height: 36px;
+    line-height: 18px;
+    margin-bottom: 0.266667rem;
+    font-size: 0.746667rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    display: block;
+    // height: 1.866667rem;
+  }
 }
 // img
 .van-card__thumb {
-  width: 8rem;
+  // width: 7.733333rem;
+  width: 7.466667rem;
   height: 5.066667rem;
 }
 .van-card__content {
   justify-content: flex-start;
 }
-.van-card__title {
-  max-height: 36px;
-  line-height: 18px;
-  margin-bottom: 0.266667rem;
-  font-size: 0.746667rem;
-  height: 1.866667rem;
-}
+
 // 价格
 .price {
   font-size: 22px;

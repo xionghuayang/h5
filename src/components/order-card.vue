@@ -23,7 +23,10 @@
           待付款:
           <span>￥{{order.money}}</span>
         </i>
-        <i v-else>实付:0</i>
+        <i v-else>
+          实付款:
+          <span class="priceStyle">￥0.00</span>
+        </i>
       </p>
     </div>
     <div class="order-pass" v-if="order.status==3">交易成功</div>
@@ -100,12 +103,20 @@ export default {
       wxPay
         .payment(data)
         .then(res => {
-          alert("then");
-          alert(JSON.stringify(res));
+          // alert("then");
+          // alert(JSON.stringify(res));
+          this.$toast("支付成功");
+          this.$router.push({
+            path: "/courseplayer",
+            query: {
+              id: this.order.liveCurriculaId
+            }
+          });
         })
         .catch(err => {
-          alert("error");
-          alert(JSON.stringify(err));
+          // alert("error");
+          // alert(JSON.stringify(err));
+          this.$toast("取消支付");
         });
     },
     delFn(id) {
@@ -151,6 +162,10 @@ export default {
 };
 </script>
 <style scoped lang="scss">
+.priceStyle {
+  color: red;
+  font-size: 28px;
+}
 .order {
   height: 500px;
   // background-color: red;
@@ -170,8 +185,10 @@ export default {
     align-items: center;
     padding: 0 30px;
     img {
-      width: 300px;
-      height: 200px;
+      // width: 300px;
+      // height: 200px;
+      width: 7.466667rem;
+      height: 5.066667rem;
     }
     .content-right {
       margin-left: 0.53rem;

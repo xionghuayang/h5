@@ -14,7 +14,7 @@
         <div>该订单未支付，交易关闭</div>
       </div>
     </div>
-    <div class="orderbody">
+    <div class="orderbody" @click="goCourseInfo">
       <div class="orderimg">
         <img :src="details.imagePrefix+details.liveCurriculaCover" alt />
         <div>
@@ -37,9 +37,17 @@
           <span>订单编号</span>
           <span class="float">{{details.liveCurriculaPayId}}</span>
         </div>
+        <div class="bodys" v-if="details.status==3">
+          <span>微信交易号</span>
+          <span class="float">{{details.tradeNo}}</span>
+        </div>
         <div class="bodys">
           <span>创建时间</span>
           <span class="float">{{details.creaTime}}</span>
+        </div>
+        <div class="bodys" v-if="details.status==3">
+          <span>付款时间</span>
+          <span class="float">{{details.endTime}}</span>
         </div>
       </div>
     </div>
@@ -82,6 +90,14 @@ export default {
   },
 
   methods: {
+    goCourseInfo() {
+      this.$router.push({
+        path: "/courseplayer",
+        query: {
+          id: this.details.liveCurriculaId
+        }
+      });
+    },
     zero(time) {
       if (time < 10) {
         time = "0" + time;
@@ -111,12 +127,21 @@ export default {
       wxPay
         .payment(data)
         .then(res => {
-          alert("then");
-          alert(JSON.stringify(res));
+          // alert("then");
+          // alert(JSON.stringify(res));
+          this.$toast("支付成功");
+          this.$router.push({
+            path: "/courseplayer",
+            query: {
+              id: this.details.liveCurriculaId
+            }
+          });
         })
         .catch(err => {
-          alert("error");
-          alert(JSON.stringify(err));
+          // alert("error");
+          // alert(JSON.stringify(err));
+          this.$toast("取消支付");
+          // location.reload();
         });
     },
     delFn(id) {
@@ -177,8 +202,10 @@ export default {
     display: flex;
     img {
       display: flex;
-      width: 8rem;
-      height: 5.333rem;
+      // width: 8rem;
+      // height: 5.333rem;
+      width: 7.466667rem;
+      height: 5.066667rem;
     }
     > div {
       margin-left: 0.53rem;

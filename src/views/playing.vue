@@ -1,19 +1,15 @@
 <template>
   <div>
-    <div v-if="window_" class="playPhone">
+    <div class="playPhone">
       <div class="voide_part">
-        <live-broadcast :videoObj="videoObj" v-if="showVideo" @initPageStyle="initPageStyle"></live-broadcast>
-        <player-navbar :peopleNum="999"></player-navbar>
+		<live-voide :videoObj="videoObj" v-if="videoObj.liveType==2"></live-voide>
+        <div v-else><live-broadcast :videoObj="videoObj" v-if="showVideo" @initPageStyle="initPageStyle"></live-broadcast></div>
+        <player-navbar :peopleNum="onLivePeople" :titleClass="titleClass"></player-navbar>
       </div>
 
       <div class="playing_tabs">
-        <van-tabs
-          v-model="active"
-          swipeable
-          color="transparent"
-          :border="!correct"
-          :animated="correct"
-        >
+        <!-- swipeable -->
+        <van-tabs v-model="active" color="transparent" :border="!correct" :animated="correct">
           <van-tab
             title-style="font-size:.293333rem;"
             v-for="(item,index) in tabs"
@@ -21,16 +17,21 @@
             :key="index"
           >
             <div class="content chat_room" v-if="index==0">
-              <chat-room :boxH="boxH" :videoObj="videoObj" v-if="showVideo"></chat-room>
+              <chat-room
+                :boxH="boxH"
+                :videoObj="videoObj"
+                v-if="showVideo"
+                @listenerPeopleNum="listenerPeopleNum"
+              ></chat-room>
             </div>
             <div
               class="content advisory_teacher"
               :style="{height:(boxH + 15) + 'px'}"
               v-show="index==1"
             >
-              <p>招生教师——{{teacher.name}}</p>
-              <!-- <img :src="teacher.avatar" alt=""> -->
-              <p class="qr_code" v-html="teacher.details"></p>
+              <p>{{teacher_school.name}} | {{teacher.name}}</p>
+              <p v-if="teachers.name" class="qr_code" v-html="teachers.details"></p>
+              <p v-else class="qr_code" v-html="teachers_school.teachers"></p>
             </div>
             <div class="content" :style="{height:(boxH + 15) + 'px'}" v-show="index==2">
               <div
@@ -45,12 +46,12 @@
                 @click="schoolActive(1)"
                 class="school_"
               >{{tabschool[1]}}</div>
-
-              <div class="school" v-if="school_active==1">
-                <div class="school_fx" v-html="teacher.orgDetails"></div>
+              <div class="school" v-if="records.isSwitch2==1&&school_active==0">
+                <div class="school_abstract" v-html="teachers_school.details"></div>
               </div>
-              <div class="school" v-else>
-                <div class="school_abstract" v-html="teacher_school.details"></div>
+              <div class="school" v-if="records.isSwitch3==1&&school_active==1">
+                <div v-if="teachers.name" class="school_fx" v-html="teachers.orgDetails"></div>
+                <div v-else class="school_fx" v-html="teachers_school.orgDescribe"></div>
               </div>
             </div>
             <div class="content" :style="{height:(boxH + 15) + 'px'}" v-show="index==3">
@@ -59,7 +60,8 @@
                   <img src="@/assets/images/agTop1.png" alt srcset />邀请榜TOP20
                 </div>
               </div>
-              <div class="top_list_for" v-for="(item, index) in invitation" :key="index">
+              <div v-if="invitation==''" class="top_list_wu">暂无被邀请人</div>
+              <div v-else class="top_list_for" v-for="(item, index) in invitation" :key="index">
                 <div class="top_list_header">
                   <!-- item.AVATAR -->
                   <img :src="$store.state.imagePrefix+item.AVATAR" alt srcset />
@@ -68,13 +70,16 @@
                   <p>
                     {{item.NAME}}
                     <img
-                      :src="topThreeImg[0].src"
+                      :src="topThreeImg[index].src"
                       v-if="index == 0 || index == 1 || index == 2"
                       alt
                       srcset
                     />
                   </p>
-                  <p>邀请{{item.receiveCount}}位好友参与直播</p>
+                  <p>
+                    邀请
+                    <span style="color: #FF6A5B;">{{item.receiveCount}}</span>位好友参与直播
+                  </p>
                 </div>
               </div>
             </div>
@@ -84,101 +89,12 @@
       <div class="double_img">
         <round-double
           :shareUrl="shareUrl"
-          :teacherQrCode="teacher.details"
+          :teacherQrCode="teachers.details"
           :orgName="teacher_school.name"
           :orgId="String(teacher_school.userId)"
           :oneId="String($route.query.oneId)"
-        ></round-double>
-      </div>
-    </div>
-    <div v-else class="playing">
-      <div class="voide_part">
-        <live-broadcast :videoObj="videoObj" v-if="showVideo" @initPageStyle="initPageStyle"></live-broadcast>
-        <player-navbar :peopleNum="999"></player-navbar>
-      </div>
-
-      <div class="playing_tabs">
-        <van-tabs
-          v-model="active"
-          swipeable
-          color="transparent"
-          :border="!correct"
-          :animated="correct"
-        >
-          <van-tab
-            title-style="font-size:.293333rem;"
-            v-for="(item,index) in tabs"
-            :title="item"
-            :key="index"
-          >
-            <div class="content chat_room" v-if="index==0">
-              <chat-room :boxH="boxH" :videoObj="videoObj" v-if="showVideo"></chat-room>
-            </div>
-            <div
-              class="content advisory_teacher"
-              :style="{height:(boxH + 15) + 'px'}"
-              v-show="index==1"
-            >
-              <p>招生教师——{{teacher.name}}</p>
-              <!-- <img :src="teacher.avatar" alt=""> -->
-              <p class="qr_code" v-html="teacher.details"></p>
-            </div>
-            <div class="content" :style="{height:(boxH + 15) + 'px'}" v-show="index==2">
-              <div
-                v-if="records.isSwitch2==1"
-                :class="[school_active==0?'school_active':'']"
-                @click="schoolActive(0)"
-                class="school_"
-              >{{tabschool[0]}}</div>
-              <div
-                v-if="records.isSwitch3==1"
-                :class="[school_active==1?'school_active':'']"
-                @click="schoolActive(1)"
-                class="school_"
-              >{{tabschool[1]}}</div>
-
-              <div class="school" v-if="school_active==1">
-                <div class="school_fx" v-html="teacher.orgDetails"></div>
-              </div>
-              <div class="school" v-else>
-                <div class="school_abstract" v-html="teacher_school.details"></div>
-              </div>
-            </div>
-            <div class="content" :style="{height:(boxH + 15) + 'px'}" v-show="index==3">
-              <div class="proclamation">
-                <div class="agTop1">
-                  <img src="@/assets/images/agTop1.png" alt srcset />邀请榜TOP20
-                </div>
-              </div>
-              <div class="top_list_for" v-for="(item, index) in invitation" :key="index">
-                <div class="top_list_header">
-                  <!-- item.AVATAR -->
-                  <img :src="$store.state.imagePrefix+item.AVATAR" alt srcset />
-                </div>
-                <div class="top_list_info">
-                  <p>
-                    {{item.NAME}}
-                    <img
-                      :src="topThreeImg[0].src"
-                      v-if="index == 0 || index == 1 || index == 2"
-                      alt
-                      srcset
-                    />
-                  </p>
-                  <p>邀请{{item.receiveCount}}位好友参与直播</p>
-                </div>
-              </div>
-            </div>
-          </van-tab>
-        </van-tabs>
-      </div>
-      <div class="double_img">
-        <round-double
-          :shareUrl="shareUrl"
-          :teacherQrCode="teacher.details"
-          :orgName="teacher_school.name"
-          :orgId="String(teacher_school.userId)"
-          :oneId="String($route.query.oneId)"
+          :threeId="String($route.query.threeId)"
+          :uId="uId"
         ></round-double>
       </div>
     </div>
@@ -187,6 +103,7 @@
 <script>
 import liveBroadcast from "@/components/live-broadcast.vue";
 import playerNavbar from "@/components/player-navbar.vue";
+import liveVoide from "../components/live-voide.vue";
 import chatRoom from "@/components/chat-room.vue";
 import roundDouble from "@/components/round-double.vue";
 import shareUrlJs from "../utils/shareUrl.js";
@@ -196,11 +113,13 @@ export default {
   components: {
     liveBroadcast,
     playerNavbar,
+	liveVoide,
     chatRoom,
     roundDouble
   },
   data() {
     return {
+      oneData: {},
       correct: true,
       correct1: true,
       active: 0,
@@ -209,10 +128,12 @@ export default {
       tabschool: ["总校介绍", "分校简介"],
       school_active: 0,
       teacher: {},
+      teachers: {},
       invitation: {},
       videoObj: {},
       showVideo: false,
       teacher_school: {},
+      teachers_school: {},
       topThreeImg: [
         {
           src: require("@/assets/images/sign_01.png")
@@ -224,12 +145,18 @@ export default {
           src: require("@/assets/images/sign_03.png")
         }
       ],
-      window_: true,
       shareUrl: "",
-      records: ""
+      records: "",
+      uId: "",
+      // records: "",
+      titleClass: "",
+      peopleNum: 0,
+      onLivePeople: 0
     };
   },
   async created() {
+    let that = this;
+    window.addEventListener("resize", that.initPageStyle);
     this.$toast.loading({
       message: "正在初始化直播间...",
       forbidClick: true,
@@ -248,31 +175,57 @@ export default {
     //   return;
     // }
     let uId = await shareUrlJs(this);
+    this.uId = uId.toString();
     let shareUrl = location.href + "&rowid=" + uId;
     this.shareUrl = shareUrl;
     this.getDataByOneId();
+    // 存在分享判断
+    if (this.$route.query.rowid) {
+      this.isHaveCourse();
+    }
+
     // console.log(this.shareUrl, ">>>>>>>>>>>>>");
   },
   mounted() {
     this.initPageStyle();
     this.consulting();
-    this.windowFn();
     this.showplay();
-    window.onresize = () => {
-      return (() => {
-        this.windowFn();
-      })();
-    };
+  },
+  beforeDestroy() {
+    let that = this;
+    window.removeEventListener("resize", that.initPageStyle);
   },
   methods: {
     // 判断用户是否拥有该课程
-    isHaveCourse() {
+    async isHaveCourse() {
       // 付费课没有拥有，前往上个页面
-      let data = this.oneData;
+      let p = this.$user();
+      p.liveCurriculaId = this.$route.query.oneId;
+      let res = await this.$request.post("/app/live/liveList", p);
+      // console.log(res, "-----82");
+      let data = res.data.records[0];
+      // console.log(data, "----------280");
       if (data.liveCurriculaPresentPrice !== 0 && !data.isLiveCurriculaUser) {
+        this.$toast("请先购买该课程");
         this.$router.push({
           path: "/coursePlayer",
-          id: this.$route.query.oneId
+          query: {
+            id: this.$route.query.oneId
+          }
+        });
+        return;
+      }
+      let threeIdInfo = await this.$request.post("/app/live/courseInfo", {
+        liveCurriculaCourseId: this.$route.query.threeId
+      });
+      // 公开课需要密码 || 付费课已拥有需要密码
+      if (threeIdInfo.data.livePassword.trim().length > 0) {
+        this.$toast("请输入密码后观看");
+        this.$router.push({
+          path: "/coursePlayer",
+          query: {
+            id: this.$route.query.oneId
+          }
         });
         return;
       }
@@ -287,7 +240,6 @@ export default {
       if (res.code !== 200) return this.$toast("数据获取失败");
       this.oneData = res.data.records[0];
       this.share();
-      this.isHaveCourse();
     },
     // 拼接share参数
     share() {
@@ -308,26 +260,20 @@ export default {
       let wxShare = new Share();
       wxShare.init(_obj);
     },
-    windowFn() {
-      if (
-        /Android|webOS|iPhone|iPod|iPad|BlackBerry/i.test(navigator.userAgent)
-      ) {
-        //移动端
-        this.window_ = true;
-      } else {
-        //pc端
-        this.window_ = false;
-        //
-        document.getElementsByTagName("html")[0].style.fontSize = "50px";
-        console.log(document.getElementsByTagName("html")[0].style);
-        console.log(window.location.href, ">>>>>>");
-      }
-    },
     showplay() {
       let { oneId } = this.$route.query;
       let p = { liveCurriculaId: oneId };
       this.$request.post("/app/live/liveList", p).then(res => {
         if (res.code == 200) {
+          // console.log(res.data)
+          //       let q = {};
+          //       q.userId = res.data.records[0].createUser;
+          //       this.$request.post("/app/home/getUserInfoAll", q).then(res => {
+          //         if (res.code == 200) {
+          // console.log(res.data)
+          //           this.titleClass = res.data.nickname;
+          //         }
+          //       });
           this.records = res.data.records[0];
           let arrtabs = document.querySelectorAll(".van-tab");
           if (this.records.isSwitch1 == 0) {
@@ -335,8 +281,10 @@ export default {
           }
           if (this.records.isSwitch2 == 0 && this.records.isSwitch3 == 0) {
             arrtabs[2].style.display = "none";
-          }
-          if (this.records.isSwitch2 == 0) {
+          } else if (
+            this.records.isSwitch2 == 0 &&
+            this.records.isSwitch3 == 1
+          ) {
             this.schoolActive(1);
           }
           if (this.records.isSwitch5 == 0) {
@@ -356,7 +304,17 @@ export default {
             document.querySelector(".playing_tabs .van-tabs__wrap")
               .clientHeight +
             15);
-        // console.log(this.boxH);
+        console.log(document.querySelector(".van-tabs__content").style.height);
+		// document.querySelector('.playing_tabs').style.paddingTop=document.querySelector(".voide_part").clientHeight+'px'
+		document.querySelector(".van-tabs__content").style.height = this.boxH + 15 + "px";
+		if (/phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone/i.test(navigator.userAgent)) {
+		} else {
+			this.boxH=530;
+			document.querySelector(".van-tabs__content").style.height =this.boxH + 15 + "px";
+			var double = document.querySelector('.double')
+			double.style.right='calc(50% - 220px)'
+		}
+        console.log(this.boxH);
       }, 0);
     },
     consulting() {
@@ -366,30 +324,35 @@ export default {
       // console.log(p)
       this.$request.post("/app/live/courseInfo", p).then(res => {
         if (res.code == 200) {
-          let p = {};
-          let q = {};
-          this.invitation = res.data;
           this.invitationFn();
           this.videoObj = {
+			liveCurriculaCourseId:res.data.liveCurriculaCourseId,
             liveBDomain: res.data.liveBDomain,
             liveAppName: res.data.liveAppName,
-            liveStreamName: res.data.liveStreamName
+            liveStreamName: res.data.liveStreamName,
+			roomId:res.data.liveRoomId,
+			userId:this.$user().rowid,
+			liveType:res.data.liveType
           };
-
+          this.peopleNum = res.data.livePeopleNum;
           this.showVideo = !this.showVideo;
           this.$toast.clear();
-          q.userId = res.data.createUser;
+          let p = {};
           p.userId = res.data.liveTeacher;
           // console.log(this.invitation)
           this.$request.post("/app/home/getUserInfoAll", p).then(res => {
             if (res.code == 200) {
-              this.teacher = res.data.teachers;
-              // console.log(res)
+              this.teacher = res.data;
+              this.teachers = res.data.teachers;
+              console.log(this.teachers);
             }
           });
-          this.$request.post("/app/home/getUserInfoAll", q).then(res => {
+          p.userId = res.data.createUser;
+          this.$request.post("/app/home/getUserInfoAll", p).then(res => {
             if (res.code == 200) {
-              this.teacher_school = res.data.organization;
+              this.teacher_school = res.data;
+              this.teachers_school = res.data.organization;
+              this.titleClass = res.data.nickname;
             }
           });
         }
@@ -405,9 +368,29 @@ export default {
           if (this.invitation.length >= 20) {
             this.invitation.length = 20;
           }
-          console.log(this.invitation);
+          // if (!this.invitation[0].receiveCount) {
+          //   this.invitation = "";
+          // }
         }
       });
+    },
+    listenerPeopleNum(length, msg) {
+      console.log(length, msg, "------------------");
+      this.onLivePeople = length;
+      let p = this.$user();
+      // console.log(this.peopleNum);
+      if (parseInt(msg.sender) === p.rowid) {
+        // 超出限制，踢出房间
+        if (length > this.peopleNum) {
+          this.$dialog.alert({
+            message: "直播间人数已满,请联系老师或机构客服进入直播间"
+          });
+          setTimeout(() => {
+            this.$dialog.close();
+            this.$router.go(-1);
+          }, 2000);
+        }
+      }
     }
   }
 };
@@ -419,203 +402,12 @@ export default {
 }
 .playPhone {
   .voide_part {
-    position: fixed;
-    width: 100%;
-    height: 11.893333rem;
+	height: 561px;
+	
     z-index: 2;
   }
-  .playing_tabs {
-    padding-top: 11.893333rem;
-    .van-tabs__content {
-      height: calc(100vh - (11.8933 * 18.75px + 44px));
-    }
-  }
-}
-.playing {
-  height: 13.34rem;
-  width: 7.45rem;
-  font-size: 0.24rem;
-  margin: auto;
-  position: relative;
-  .voide_part {
-    height: 4.46rem;
-    .video_box {
-      height: 3.72rem;
-      #bz_player_video {
-        width: 100%;
-        height: 100%;
-      }
-    }
-    .player_navbar {
-      padding: 0 0.5rem;
-      width: 100%;
-      height: 0.74rem;
-      div {
-        font-size: 0.24rem;
-      }
-      img {
-        width: 0.24rem;
-        height: 0.25rem;
-        margin-right: 0.1rem;
-      }
-      .study_num {
-        margin: 0 0.2rem;
-      }
-      span {
-        font-size: 0.24rem;
-      }
-    }
-  }
-  .playing_tabs {
-    .van-tab__pane-wrapper {
-      .advisory_teacher {
-        > p {
-          padding-top: 0.66rem;
-          font-size: 0.24rem;
-        }
-        .qr_code {
-          width: 4.2rem;
-          height: 4.2rem;
-        }
-      }
-    }
-    height: 8.8rem;
-    .van-tabs {
-      height: 8.8rem;
-      .van-tabs__content {
-        height: 7.92rem;
-        .web_room_allMsg {
-          height: 7.92rem !important;
-        }
-      }
-    }
-  }
-
-  .school_ {
-    font-size: 0.24rem;
-    height: 0.8rem;
-    line-height: 0.8rem;
-  }
-  .school {
-    font-size: 0.24rem;
-    padding: 0 0.24rem;
-    p {
-      font-size: 0.24rem;
-    }
-  }
-  .school_abstract {
-    font-size: 0.24rem;
-  }
-  .agTop {
-    .proclamation {
-      font-size: 0.24rem;
-      padding: 0.32rem 0 0.28rem;
-      img {
-        width: 0.28rem;
-        height: 0.4rem;
-      }
-    }
-    .top_list_for {
-      padding: 0.42rem 0 0.42rem 0.58rem;
-      .top_list_header {
-        img {
-          width: 0.6rem;
-          height: 0.6rem;
-        }
-      }
-      .top_list_info {
-        p {
-          font-size: 0.28rem;
-          img {
-            width: 0.3rem;
-            height: 0.24rem;
-          }
-        }
-        p:last-of-type {
-          font-size: 0.24rem;
-        }
-      }
-    }
-  }
-  .chat_room {
-    .web_room {
-      padding: 0.1rem 0.3rem;
-      // font-size: 0.24rem ;
-
-      .web_room_allMsg {
-        padding: 0;
-        .for_list {
-          margin-bottom: 0.3rem;
-        }
-        p {
-          font-size: 0.24rem;
-        }
-        .user_avatar {
-          width: 0.5rem;
-          height: 0.5rem;
-          border-radius: 50%;
-        }
-        .user_news {
-          font-size: 0.24rem;
-          border-radius: 2px;
-          padding: 0.24rem 0.54rem 0.26rem 0.24rem;
-        }
-      }
-    }
-    .web_send_msg_foot {
-      position: absolute;
-      bottom: 0;
-      padding: 0 0.3rem;
-      height: 1rem;
-      span {
-        font-size: 0.24rem;
-      }
-      .user_input_msg {
-        width: 5.8rem;
-        .van-cell {
-          width: 100%;
-          padding: 0.2rem 0.3rem;
-        }
-      }
-    }
-  }
-  .content {
-    .proclamation {
-      padding: 0.25rem 0;
-      .agTop1 {
-        font-size: 0.24rem;
-        img {
-          width: 0.3rem;
-          height: 0.4rem;
-          margin: 0 5px 0 0;
-        }
-      }
-    }
-    .top_list_for {
-      padding: 0.4rem 0 0.4rem 0.6rem;
-      img {
-        width: 0.6rem;
-        height: 0.6rem;
-      }
-      p {
-        font-size: 0.24rem;
-        img {
-          width: 0.3rem;
-          height: 0.3rem;
-        }
-      }
-    }
-  }
-
-  .double {
-    height: 2.4rem;
-    width: 1rem;
-    position: absolute;
-    top: 70%;
-    right: 0.5rem;
-    img {
-      height: 1rem;
-    }
+  .van-tab {
+    font-size: 18px !important;
   }
 }
 .chat_room {
@@ -625,6 +417,11 @@ export default {
 }
 .content {
   background: #f9f9f9;
+  overflow-y: scroll;
+  &::-webkit-scrollbar {
+    /*隐藏滚轮*/
+    display: none;
+  }
   .chat_room {
     height: 500px;
     width: 100%;
@@ -654,7 +451,6 @@ export default {
     }
   }
 }
-
 .advisory_teacher {
   > p {
     font-size: 26px;
@@ -664,13 +460,9 @@ export default {
 
   .qr_code {
     width: 418px;
-    height: 418px;
     margin: 0 auto;
-
-    p {
-      img {
-        width: 100%;
-      }
+    img {
+      width: 100%;
     }
   }
 }
@@ -680,9 +472,9 @@ export default {
   display: inline-block;
   width: 50%;
   text-align: center;
-  height: 2rem;
-  line-height: 2rem;
-  font-size: 0.75rem;
+  height: 72px;
+  line-height: 72px;
+  font-size: 32px;
 }
 
 .school_active {
@@ -691,16 +483,25 @@ export default {
 
 .school_abstract {
   font-size: 0.75rem;
+  margin: 0 20px;
+  img {
+    width: 100%;
+  }
 }
 
 .school_fx {
   font-size: 0.75rem;
+  margin: 0 20px;
   span {
     display: block;
     text-align: left !important;
   }
 }
-
+.top_list_wu {
+  text-align: center;
+  font-size: 28px;
+  color: #666;
+}
 .top_list_for {
   padding: 42px 0 43px 58px;
   box-sizing: border-box;
@@ -738,8 +539,8 @@ export default {
   }
 
   img {
-    width: 24px;
-    height: 30px;
+    width: 24px !important;
+    height: 30px !important;
   }
 }
 </style>

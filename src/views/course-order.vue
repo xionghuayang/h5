@@ -60,13 +60,19 @@ export default {
         .getPaySign()
         .then(res => {
           // console.log(res);
-          alert("then");
-          alert(JSON.stringify(res));
+          // alert("then");
+          // alert(JSON.stringify(res));
+          // _that.$router.push({
+          //   path: "/myliveclass"
+          // });
+          _that.$toast("支付成功");
+          _that.$router.go(-1);
         })
         .catch(err => {
           // console.log(res);
-          alert("error");
-          alert(JSON.stringify(err));
+          // alert("error");
+          // alert(JSON.stringify(err));
+          _that.$toast("取消支付");
           _that.$router.go(-1);
         });
     }

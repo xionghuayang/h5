@@ -43,10 +43,7 @@
                       <div class="directory_courses" :key="item1.creaTime">
                         <div class="lesson_title">
                           <!-- 直播中 --  -->
-                          <div
-                            v-if="item1.liveStatus === 1"
-                            @click="joinStudio(item1.liveCurriculaCourseId)"
-                          >
+                          <div v-if="item1.liveStatus === 1" @click="joinStudio(item1)">
                             {{item1.liveTitle}}
                             <span>
                               <img src="@/assets/images/playing.png" alt srcset />
@@ -143,6 +140,7 @@
 import formatDate from "../utils/formatDate.js";
 import getCourse from "../utils/course";
 import Pay from "../assets/js/pay";
+import shareUrl from "../utils/shareUrl";
 let btnState = {
   0: "加入直播课",
   1: "立即购买",
@@ -177,14 +175,27 @@ export default {
     };
   },
   async created() {
-    // 清空课程路径
-    localStorage.removeItem("shareUrl");
+    // let routers = this.$router.options.routes;
+    // console.log(routers);
+    // this.$public.loginByToken();
+    // // 清空课程路径
+    // localStorage.removeItem("shareUrl");
+    // 判断用户是否分享进入
+    let uId = await shareUrl(this);
     // 获取链接数据
     let { id } = this.$route.query;
     // 根据一级id获取数据 courseObj
     this.getDataByOneId(id);
   },
-  mounted() {},
+  mounted() {
+    window.onscroll = null;
+    if (/Android|webOS|iPhone|iPod|iPad|BlackBerry/i.test(navigator.userAgent)) {
+      console.log('11')
+    } else {
+      //pc端
+      document.querySelector('.footer').style.width = '480px'
+    }
+  },
   methods: {
     // 根据一级id获取数据 id
     async getDataByOneId(id) {
@@ -233,7 +244,7 @@ export default {
       }
     },
     // 进入直播间
-    async joinStudio(id) {
+    async joinStudio(item1) {
       /**
        * @param:{ name1 } { String } @description
        * @param:{ name2 } { String } @description
@@ -241,16 +252,22 @@ export default {
        * @description 进入直播间
        */
       let res = await this.$public.loginByToken();
-      this.liveId = id;
+      // if (item1.liveType == 2 && this.$public._isMobile()) {
+      //   this.$dialog.alert({
+      //     message: "请使用电脑端观看课程"
+      //   });
+
+      this.liveId = item1.liveCurriculaCourseId;
       if (this.isPublic) {
         // 公共课，输入密码前往直播间观看
-        this.getLivePwd(id);
+        this.getLivePwd(item1.liveCurriculaCourseId);
       } else if (this.isPay == 0) {
         // 付费课未购买
         this.$toast("请购买后观看直播");
       } else {
         // 已购买，直接前往直播间
-        this.goLive(this.courseObj.id);
+        this.getLivePwd(item1.liveCurriculaCourseId);
+        // this.goLive(this.courseObj.id);
       }
     },
     // 获取直播间密码
@@ -307,6 +324,9 @@ export default {
       // 获取内容
       let courseList = await Promise.all(
         arr.map(async item => {
+          // 全部展开
+          this.activeNames.push(item.liveCurriculaCatalogueId);
+
           let id = item.liveCurriculaCatalogueId;
           p.liveCurriculaCatalogueId = id;
           let res = await this.$request.post("/app/live/courseList", p);
@@ -321,7 +341,7 @@ export default {
         })
       );
       this.courseList = courseList;
-      this.activeNames[0] = courseList[0].liveCurriculaCatalogueId;
+      // this.activeNames[0] = courseList[0].liveCurriculaCatalogueId;
       // console.log(courseList);
     },
     // 获取登录用户的是否购买该课程
@@ -424,6 +444,7 @@ export default {
     },
     // 立即支付
     buy() {
+      let _that = this;
       // console.log(123);
       let data = this.Payparams;
       let wxPay = new Pay({});
@@ -431,16 +452,24 @@ export default {
       wxPay
         .payment(data)
         .then(res => {
-          alert("then");
-          alert(JSON.stringify(res));
+          // alert("then");
+          // alert(JSON.stringify(res));
+          _that.$toast("支付成功");
+          // location.reload();
+          _that.getDataByOneId(_that.$route.query.id);
         })
         .catch(err => {
-          alert("error");
-          alert(JSON.stringify(err));
+          // alert("error");
+          // alert(JSON.stringify(err));
+          _that.$toast("取消支付");
+          // location.reload();
         });
     },
     // 前往回放
     async rePlay(data, item) {
+      // 验证用户登录
+      let login = await this.$public.loginByToken();
+      if (login.code !== 200) return;
       // console.log(data, item);
       // 判断公开课 true 前往回放 false 提示购买
       if (!this.isPublic && this.isPay == 0)
@@ -459,7 +488,7 @@ export default {
       let { liveCurriculaTitle, liveCurriculaCourseId } = data;
       let { liveCurriculaCatalogueTitle, liveCurriculaCatalogueId } = item;
       // 刷新回放页面
-      this.$store.commit("reloadPage", true);
+      // this.$store.commit("reloadPage", true);
       // 前往回放
       this.$router.push({
         path: "/rePlay",
@@ -480,14 +509,18 @@ export default {
 @import "@/assets/css/global.scss";
 .publicCourse {
   font-size: 22px;
-  color: #05c600;
+  // color: #05c600;
+  color: red;
 }
 .cover_img {
   width: 100%;
-  height: 372px;
+  // height: 372px;
+  height: 487px;
   img {
     width: 100%;
-    height: 372px;
+    height: 100%;
+    // height: 372px;
+    // height: 392px;
   }
 }
 .course_title {
@@ -649,6 +682,11 @@ export default {
     font-size: 26px;
     color: #616161;
   }
+}
+
+// 富文本，图片样式
+.van-tab__pane img {
+  width: 100%;
 }
 
 .van-tab__pane,

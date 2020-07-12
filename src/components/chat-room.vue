@@ -100,6 +100,7 @@ export default {
       }
     };
   },
+
   // beforeDestroy生命周期中调用$disconnect方法
   beforeDestroy() {
     // 页面销毁时,断开连接
@@ -142,6 +143,11 @@ export default {
        * 如果非指定人发送视为发送给整个房间 即 to toId 为空
        * @description 用户发送消息
        */
+      // 输入内容为空，不发送消息
+      if (this.socketMsg.trim().length === 0) {
+        return;
+      }
+
       if (!to) to = "";
       if (!toId) toId = "";
       if (!type) type = 4;
@@ -219,7 +225,7 @@ export default {
     .user_msg {
       margin-left: 10px;
 
-      font-size: 24px;
+      font-size: 28px;
       .user_name {
         color: #c4c4c4;
       }

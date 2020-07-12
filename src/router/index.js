@@ -1,22 +1,26 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import index from '../views/index.vue'
-
 Vue.use(VueRouter)
-
 const routes = [
-  {
-    path: '/',
-    name: 'index',
-    component: index
-  },
   {
     path: '/login',
     name: 'login',
+    component: () => import('../views/login.vue'),
+    meta: {
+      title: '登录'
+    },
+  },
+  { path: '/', redirect: '/liveClass' },
+  {
+    path: '/liveClass',
+    name: 'liveClass',
+    meta: {
+      title: '直播特训班'
+    },
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/login.vue')
+    component: () => import(/* webpackChunkName: "about" */ '../views/live-class.vue')
   },
   {
     path: '/coursePlayer',
@@ -55,17 +59,6 @@ const routes = [
     meta: {
       title: '课程订单'
     }
-  },
-  {
-    path: '/liveClass',
-    name: 'liveClass',
-    meta: {
-      title: '直播特训班'
-    },
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/live-class.vue')
   },
   {
     path: '/myLiveClass',
@@ -126,8 +119,12 @@ const routes = [
 
 ]
 
+
 const router = new VueRouter({
-  routes
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    return { x: 0, y: 0 }
+  }
 })
 
 export default router
